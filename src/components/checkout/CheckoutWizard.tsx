@@ -52,9 +52,20 @@ export function CheckoutWizard({
     setStep(2);
   }
 
+  // Com 1 ingresso, o participante é o próprio comprador: pula a etapa de
+  // participantes (dados já foram digitados). Com mais de 1, o comprador
+  // vem preenchido como participante 1 e pode ser editado.
+  const participanteEhComprador = quantidade === 1;
+
   function handleComprador(values: CompradorFormValues) {
     setComprador(values);
-    setStep(3);
+    setParticipantes((prev) => {
+      const next = [...prev];
+      const primeiro = next[0] ?? { nome: "", email: "" };
+      if (!primeiro.nome.trim()) next[0] = { nome: values.nome, email: values.email };
+      return next;
+    });
+    setStep(participanteEhComprador ? 4 : 3);
   }
 
   function handleParticipantesSubmit() {
@@ -121,9 +132,14 @@ export function CheckoutWizard({
 
       trackAddPaymentInfo(lote.modalidade.slug);
 
-      // Navegação de página inteira proposital (não router.push): output "export" não tem
-      // servidor, e uma troca de estado tão grande (fim do checkout) fica mais confiável com
-      // reload completo do que com transição client-side — mesma convenção usada no admin.
+      // Pedido registrado: vai direto para o pagamento na Hypercash (decisão do
+      // Aerton, 15/09/2026). A página "pendente" fica como retorno e fallback
+      // quando o lote não tiver link de pagamento. Navegação de página inteira
+      // proposital: output "export" não tem servidor.
+      if (lote.hypercash_checkout_url) {
+        window.location.href = lote.hypercash_checkout_url;
+        return;
+      }
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = `${basePath}/checkout/pendente?pedido=${pedido.id}&email=${encodeURIComponent(comprador.email)}`;
     } catch {
@@ -136,7 +152,9 @@ export function CheckoutWizard({
     <div>
       <h1>{lote.modalidade.nome}</h1>
       <p>{lote.nome}</p>
-      <p>Etapa {step} de 4</p>
+      <p>
+        Etapa {participanteEhComprador && step === 4 ? 3 : step} de {participanteEhComprador ? 3 : 4}
+      </p>
 
       {/* Resumo sempre visível — preço, quantidade e subtotal nunca ficam só na última etapa */}
       <div style={{ border: "1px solid #ddd", padding: 12, margin: "16px 0" }}>
@@ -195,7 +213,7 @@ export function CheckoutWizard({
           <h2>Dados dos participantes</h2>
           {participantes.map((participante, index) => (
             <fieldset key={index} style={{ marginBottom: 12 }}>
-              <legend>Participante {index + 1}</legend>
+              <legend>{index === 0 ? "Participante 1 (você, se for participar)" : `Participante ${index + 1}`}</legend>
               <label>
                 Nome completo
                 <input
@@ -237,7 +255,7 @@ export function CheckoutWizard({
           </label>
           {erro && <p style={{ color: "crimson" }}>{erro}</p>}
           <p>
-            <button onClick={() => setStep(3)} disabled={enviando}>
+            <button onClick={() => setStep(participanteEhComprador ? 2 : 3)} disabled={enviando}>
               Voltar
             </button>{" "}
             <button onClick={handleConfirmar} disabled={enviando || !aceiteTermos}>
