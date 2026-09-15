@@ -96,9 +96,14 @@ export function CheckoutWizard({
       const utms = getStoredUtms();
       const valorTotal = Math.round(quantidade * precoUnitario * 100) / 100;
 
-      const { data: pedido, error: pedidoError } = await supabase
+      // O id é gerado aqui: o comprador anônimo pode inserir, mas não pode
+      // ler pedidos (RLS), então um insert com ".select()" falha. Sem
+      // representation, o insert passa e o id já é conhecido.
+      const pedidoId = crypto.randomUUID();
+      const { error: pedidoError } = await supabase
         .from("pedidos_encontro27")
         .insert({
+          id: pedidoId,
           comprador_nome: comprador.nome,
           comprador_email: comprador.email,
           comprador_whatsapp: comprador.whatsapp,
@@ -114,15 +119,13 @@ export function CheckoutWizard({
           utm_content: utms.utm_content,
           aceite_termos: true,
           aceite_termos_em: new Date().toISOString(),
-        })
-        .select("id")
-        .single();
+        });
 
-      if (pedidoError || !pedido) throw pedidoError ?? new Error("Falha ao criar o pedido");
+      if (pedidoError) throw pedidoError;
 
       const { error: participantesError } = await supabase.from("participantes_encontro27").insert(
         participantes.map((p) => ({
-          pedido_id: pedido.id,
+          pedido_id: pedidoId,
           nome: p.nome,
           email: p.email || null,
         })),
@@ -141,7 +144,7 @@ export function CheckoutWizard({
         return;
       }
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.href = `${basePath}/checkout/pendente?pedido=${pedido.id}&email=${encodeURIComponent(comprador.email)}`;
+      window.location.href = `${basePath}/checkout/pendente?pedido=${pedidoId}&email=${encodeURIComponent(comprador.email)}`;
     } catch {
       setErro("Não foi possível registrar seu pedido. Tente novamente em instantes.");
       setEnviando(false);
