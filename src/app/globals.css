@@ -1,26 +1,234 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------
+ * Design tokens — O Encontro 2027
+ * Fonte: "O ENCONTRO - 2027 - IDENTIDADE VISUAL" (Canva, 12 páginas).
+ * Cores amostradas da página 5 (paleta oficial) e dos títulos das
+ * páginas 3-10. Nomes seguem os da paleta oficial.
+ * ------------------------------------------------------------------ */
+@theme {
+  /* Paleta oficial (p.5) */
+  --color-ambar: #c47a3a; /* Âmbar Cajuína — cor principal */
+  --color-ambar-escuro: #a4622b; /* fundo de botão: papel sobre ele = 4.63:1 (AA) */
+  --color-ambar-pressed: #8f541f; /* hover/pressed */
+  --color-ambar-texto: #9a5a25; /* âmbar para texto pequeno: 5.2:1 no papel, 4.5:1 na areia (AA) */
+  --color-dourado: #cdb36e; /* Dourado Fosco */
+  --color-dourado-linha: #ceb283; /* filete sob títulos */
+  --color-vermelho: #ab4c37; /* Vermelho Caju */
+  --color-areia: #f2e9d8; /* Areia Clara */
+  --color-verde: #6b7d4a; /* Verde Cajueiro */
+
+  /* Neutros derivados do material */
+  --color-papel: #fcfaf8; /* fundo de todas as páginas */
+  --color-vinho: #4c181c; /* títulos p.3/p.4 */
+  --color-marrom: #6b3a1a; /* títulos e corpo p.5-10 */
+  --color-marrom-suave: #7a4c2c; /* texto secundário: 6.8:1 no papel, 5.9:1 na areia */
+
+  /* Semânticos */
+  --color-background: var(--color-papel);
+  --color-foreground: var(--color-marrom);
+  --color-heading: var(--color-vinho);
+  --color-surface: var(--color-areia);
+  --color-border: color-mix(in srgb, var(--color-dourado) 45%, transparent);
+
+  /* Tipografia — ver .claude/skills/MANIFEST.md e checkpoint L0 */
+  --font-display: var(--font-oranienbaum), "Libre Baskerville", Georgia, serif;
+  --font-sans: var(--font-quicksand), system-ui, sans-serif;
+  --font-serif: var(--font-libre-baskerville), Georgia, serif;
+
+  /* Raios — as estampas e swatches do manual usam cantos bem arredondados */
+  --radius-card: 0.75rem; /* 12px: só em cards reais (ingresso) */
+  --radius-pill: 999px;
+
+  /* Elevação só para sobreposição real (menu mobile). Cards não têm sombra. */
+  --shadow-card: 0 8px 24px -12px rgb(107 58 26 / 0.25);
+
+  /* Container */
+  --container-site: 72rem;
+}
+
+/* Identidade única e clara: sem dark mode. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html {
+  scroll-behavior: smooth;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Campos de formulário: o preflight do Tailwind remove borda e fundo; as
+   telas que ainda usam estilo inline (login, checkout, admin) dependem
+   destes defaults para continuarem legíveis. */
+@layer base {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid color-mix(in srgb, var(--color-dourado) 70%, transparent);
+    border-radius: 0.75rem;
+    background: var(--color-papel);
+    color: var(--color-marrom);
+    font: inherit;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-marrom-suave);
+    opacity: 0.8;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    color: var(--color-vinho);
+  }
+  label > input,
+  label > select,
+  label > textarea {
+    margin-top: 0.375rem;
+    font-weight: 400;
+  }
+  /* Botões sem classe (telas antigas): mesmo desenho do CTA primário */
+  button:not([class]) {
+    min-height: 2.75rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-ambar-escuro);
+    color: var(--color-papel);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:not([class]):disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  main[style] a {
+    color: var(--color-vinho);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+}
+
+/* Painel administrativo: as telas ainda usam markup simples (h1, h2, table,
+   p). Estes estilos dão hierarquia e legibilidade sem reescrever cada tela. */
+.admin-content {
+  color: var(--color-marrom);
+  & h1 {
+    font-family: var(--font-display);
+    font-size: 1.875rem;
+    line-height: 1.15;
+    color: var(--color-vinho);
+  }
+  & h2 {
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    color: var(--color-vinho);
+    margin-top: 2rem;
+  }
+  & h3 {
+    font-weight: 600;
+    color: var(--color-vinho);
+    margin-top: 1.25rem;
+  }
+  & p {
+    margin-top: 0.5rem;
+  }
+  & table {
+    width: 100%;
+    margin-top: 0.75rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.875rem;
+    background: var(--color-papel);
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+  & th {
+    text-align: left;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-marrom-suave);
+    background: var(--color-areia);
+  }
+  & td {
+    padding: 0.625rem 0.75rem;
+    border-top: 1px solid var(--color-border);
+    vertical-align: top;
+  }
+  & a {
+    color: var(--color-vinho);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  & button:not([class]) {
+    margin-top: 0.5rem;
+  }
+  & form {
+    margin-top: 1rem;
+  }
+  & fieldset {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    padding: 1rem 1.25rem 1.25rem;
+    margin-top: 1rem;
+  }
+  & legend {
+    padding-inline: 0.5rem;
+    font-weight: 600;
+    color: var(--color-vinho);
+  }
+}
+
+/* Foco visível e consistente em todo o site público */
+:focus-visible {
+  outline: 3px solid var(--color-ambar);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Utilitários de marca */
+@utility container-site {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--container-site);
+  padding-inline: 1rem;
+  @media (width >= 40rem) {
+    padding-inline: 1.5rem;
+  }
+  @media (width >= 64rem) {
+    padding-inline: 2rem;
+  }
+}
+
+/* Label em caixa-alta espaçada (equivalente web da Glacial Indifference do manual) */
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Fundo botânico line-art (p.1-12 do manual), bem sutil */
+@utility bg-botanico {
+  background-color: var(--color-papel);
+  background-image: url("/encontro27/brand/fundo-botanico.webp");
+  background-size: cover;
+  background-position: center;
 }

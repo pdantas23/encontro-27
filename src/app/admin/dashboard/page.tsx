@@ -65,47 +65,63 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminLayout user={user}>
+      <p className="eyebrow text-ambar-texto">Visão geral</p>
       <h1>Dashboard</h1>
       {!data ? (
-        <p>Carregando...</p>
+        <ul aria-hidden="true" className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5 animate-pulse">
+          {Array.from({ length: 5 }, (_, i) => (
+            <li key={i} className="h-24 rounded-card bg-areia" />
+          ))}
+        </ul>
       ) : (
         <>
-          <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginTop: 16 }}>
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <Stat label="Pedidos" value={data.totalPedidos} />
-            <Stat label="Aguardando pagamento" value={data.aguardando} />
-            <Stat label="Aprovados" value={data.aprovados} />
-            <Stat label="Recusados" value={data.recusados} />
+            <Stat label="Aguardando pagamento" value={data.aguardando} tone="pendente" />
+            <Stat label="Aprovados" value={data.aprovados} tone="ok" />
+            <Stat label="Recusados" value={data.recusados} tone="erro" />
             <Stat label="Receita aprovada" value={formatCurrencyBRL(data.receitaAprovada)} />
-          </div>
+          </ul>
 
-          <h2 style={{ marginTop: 32 }}>Vendas por modalidade</h2>
-          <table style={{ marginTop: 8 }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: "left", paddingRight: 24 }}>Modalidade</th>
-                <th style={{ textAlign: "left" }}>Quantidade aprovada</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.vendasPorModalidade.map((row) => (
-                <tr key={row.modalidade}>
-                  <td style={{ paddingRight: 24 }}>{row.modalidade}</td>
-                  <td>{row.quantidade}</td>
+          <h2>Vendas por modalidade</h2>
+          {data.vendasPorModalidade.length === 0 ? (
+            <p className="text-marrom-suave">Nenhuma venda aprovada ainda.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Modalidade</th>
+                  <th>Quantidade aprovada</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.vendasPorModalidade.map((row) => (
+                  <tr key={row.modalidade}>
+                    <td>{row.modalidade}</td>
+                    <td>{row.quantidade}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </>
       )}
     </AdminLayout>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+const TONES = {
+  neutro: "text-vinho",
+  pendente: "text-ambar-texto",
+  ok: "text-verde",
+  erro: "text-vermelho",
+} as const;
+
+function Stat({ label, value, tone = "neutro" }: { label: string; value: string | number; tone?: keyof typeof TONES }) {
   return (
-    <div style={{ border: "1px solid #ddd", padding: 16, minWidth: 160 }}>
-      <p style={{ fontSize: 12, color: "#666" }}>{label}</p>
-      <p style={{ fontSize: 24, fontWeight: 700 }}>{value}</p>
-    </div>
+    <li className="rounded-card border border-border bg-papel p-5 shadow-card">
+      <p className="eyebrow text-[0.65rem] text-marrom-suave">{label}</p>
+      <p className={`mt-2 font-display text-3xl leading-none ${TONES[tone]}`}>{value}</p>
+    </li>
   );
 }

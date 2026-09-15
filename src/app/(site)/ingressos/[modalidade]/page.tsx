@@ -2,14 +2,15 @@ import { ModalidadeDetalhe } from "@/components/ingressos/ModalidadeDetalhe";
 
 /**
  * Export estático (output: "export") exige generateStaticParams() para
- * rotas dinâmicas — sem isso o build falha. As 4 modalidades abaixo são as
- * únicas confirmadas no seed (migration 0002); nenhuma modalidade adicional
- * deve ser criada sem confirmação da organização.
+ * rotas dinâmicas — sem isso o build falha. 4 modalidades vêm do seed
+ * (migration 0002); "almoco-start" foi aprovada pela organização em
+ * 15/09/2026 (preço especial do almoço para quem tem Start).
  */
 export function generateStaticParams() {
   return [
     { modalidade: "start" },
     { modalidade: "almoco-nao-participante" },
+    { modalidade: "almoco-start" },
     { modalidade: "jantar-conexoes" },
     { modalidade: "vip" },
   ];

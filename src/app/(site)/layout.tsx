@@ -5,7 +5,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       <SiteHeader />
-      <div style={{ flex: 1 }}>{children}</div>
+      <div className="flex-1">{children}</div>
       <SiteFooter />
     </>
   );
