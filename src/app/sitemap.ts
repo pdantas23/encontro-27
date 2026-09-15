@@ -12,7 +12,6 @@ const ROTAS: Array<{ path: string; priority: number }> = [
   { path: "/ingressos/start/", priority: 0.8 },
   { path: "/ingressos/vip/", priority: 0.8 },
   { path: "/ingressos/almoco-nao-participante/", priority: 0.7 },
-  { path: "/ingressos/almoco-start/", priority: 0.7 },
   { path: "/ingressos/jantar-conexoes/", priority: 0.7 },
   { path: "/experiencias/", priority: 0.7 },
   { path: "/convidados/", priority: 0.6 },

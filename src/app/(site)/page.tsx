@@ -6,6 +6,7 @@ import { ConvidadosSection } from "@/components/landing/ConvidadosSection";
 import { IngressosSection } from "@/components/landing/IngressosSection";
 import { FaqSection } from "@/components/landing/FaqSection";
 import { CtaFinalSection } from "@/components/landing/CtaFinalSection";
+import { EdicoesAnterioresSection } from "@/components/landing/EdicoesAnterioresSection";
 import { EventJsonLd } from "@/components/landing/EventJsonLd";
 import { FlorMotion } from "@/components/landing/FlorMotion";
 
@@ -25,6 +26,7 @@ export default function HomePage() {
       <ConvidadosSection />
       <IngressosSection />
       <FaqSection />
+      <EdicoesAnterioresSection />
       <CtaFinalSection />
     </main>
   );

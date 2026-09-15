@@ -39,7 +39,11 @@ export function HeroSection() {
 
         <h1 id="hero-titulo" className="font-display text-heading mt-4 sm:mt-6 text-4xl sm:text-6xl lg:text-7xl leading-none tracking-wide">
           O Encontro{" "}
-          <span className="block font-serif text-ambar-texto text-xl sm:text-3xl tracking-[0.35em] mt-2 sm:mt-3">2027</span>
+          <span className="sr-only">2027</span>
+          {/* Grafia da marca para o ano (como no site de 2026: VINTEVINTESEIS) */}
+          <span aria-hidden="true" className="block font-sans text-ambar-texto text-xs sm:text-sm font-semibold tracking-[0.42em] mt-3 sm:mt-4">
+            VINTE<span className="font-normal">VINTE</span>SETE
+          </span>
         </h1>
 
         <p className="font-display text-vinho text-2xl sm:text-3xl lg:text-4xl leading-tight mt-4 sm:mt-8 max-w-2xl text-balance">

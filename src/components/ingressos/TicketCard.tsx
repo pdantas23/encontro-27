@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { CTAButton } from "@/components/ui/CTAButton";
 import { formatCurrencyBRL } from "@/lib/utils";
 import { trackSelectTicket } from "@/lib/tracking/events";
@@ -20,8 +19,8 @@ const ESTADO: Record<ReturnType<typeof resumirIngresso>["disponibilidade"], stri
 };
 
 /**
- * Card de modalidade: a única entidade da landing que justifica um card.
- * Borda fina, sem sombra. Preço e disponibilidade vêm do lote ativo.
+ * Card de modalidade: nome, valor e botão de compra. Sem link de detalhe
+ * (decisão do Aerton, 15/09/2026). Preço e disponibilidade vêm do lote ativo.
  */
 export function TicketCard({ modalidade }: { modalidade: Modalidade }) {
   const { disponibilidade, lote, restantes } = resumirIngresso(modalidade);
@@ -33,15 +32,7 @@ export function TicketCard({ modalidade }: { modalidade: Modalidade }) {
 
   return (
     <li className="flex flex-col rounded-card border border-border bg-papel p-6">
-      <div className="flex items-baseline justify-between gap-4">
-        <h4 className="font-display text-vinho text-2xl">{modalidade.nome}</h4>
-        <Link
-          href={`/ingressos/${modalidade.slug}`}
-          className="shrink-0 text-sm text-vinho underline underline-offset-4 decoration-ambar hover:decoration-ambar-escuro"
-        >
-          Ver detalhes
-        </Link>
-      </div>
+      <h4 className="font-display text-vinho text-2xl">{modalidade.nome}</h4>
 
       {modalidade.descricao ? <p className="mt-3 text-marrom leading-relaxed">{modalidade.descricao}</p> : null}
       {modalidade.para_quem_e ? <p className="mt-3 text-marrom leading-relaxed">{modalidade.para_quem_e}</p> : null}
@@ -57,7 +48,7 @@ export function TicketCard({ modalidade }: { modalidade: Modalidade }) {
         </ul>
       ) : null}
 
-      <div className="mt-auto pt-6">
+      <div className="mt-auto pt-5">
         {lote?.preco != null ? (
           <p className="flex items-baseline gap-2">
             <span className="font-display text-3xl text-vinho">{formatCurrencyBRL(lote.preco)}</span>

@@ -2,6 +2,7 @@
 
 import { MinhaContaNav } from "@/components/layout/MinhaContaNav";
 import { useMeusPedidos } from "@/hooks/useMeusPedidos";
+import { OfertaAlmocoStart } from "@/components/conta/OfertaAlmocoStart";
 
 export default function MinhaContaPage() {
   const { email, pedidos, loading } = useMeusPedidos();
@@ -27,6 +28,8 @@ export default function MinhaContaPage() {
           )}
         </div>
       )}
+
+      {pedidos && pedidos.length > 0 ? <OfertaAlmocoStart pedidos={pedidos} /> : null}
     </main>
   );
 }

@@ -52,7 +52,8 @@ test.describe("Home", () => {
       /Almoço de Negócios e Jantar/,
       /^Convidados$/,
       /Como você quer participar/,
-      /^Perguntas frequentes$/,
+      /^Tire suas dúvidas$/,
+      /Momentos que continuam presentes/,
       /Da mesma origem/,
     ];
     let cursor = 0;
@@ -63,26 +64,22 @@ test.describe("Home", () => {
     }
   });
 
-  test("CTA do header e CTA final levam à seção de ingressos", async ({ page, isMobile }) => {
+  test("CTA do hero e CTA final levam à seção de ingressos", async ({ page }) => {
     await page.goto("./");
     await expect(page.locator(".animate-pulse")).toHaveCount(0);
-    if (isMobile) {
-      await page.getByRole("button", { name: "Abrir menu" }).click();
-      await expect(page.getByRole("navigation", { name: /celular/ })).toBeVisible();
-    }
-    await page.getByRole("banner").getByRole("link", { name: "Comprar ingresso" }).first().click();
+    await page.getByRole("main").getByRole("link", { name: "Comprar ingresso" }).first().click();
     await expect(page.getByRole("heading", { name: /Como você quer participar/ })).toBeInViewport();
 
     await page.getByRole("link", { name: "Ver ingressos" }).click();
     await expect(page.getByRole("heading", { name: /Como você quer participar/ })).toBeInViewport();
   });
 
-  test("4 modalidades com estado real e sem preço fixo", async ({ page }) => {
+  test("4 modalidades públicas com estado real e sem preço fixo (Almoço — Start só na conta)", async ({ page }) => {
     await page.goto("./#ingressos");
     const cards = page.locator("#ingressos li");
-    await expect(cards).toHaveCount(5);
+    await expect(cards).toHaveCount(4);
 
-    for (const nome of ["Start", "Almoço Não Participante", "Almoço — Start", "Jantar de Conexões", "VIP"]) {
+    for (const nome of ["Start", "Almoço Não Participante", "Jantar de Conexões", "VIP"]) {
       await expect(page.locator("#ingressos").getByRole("heading", { name: nome, exact: true })).toBeVisible();
     }
 
@@ -96,7 +93,6 @@ test.describe("Home", () => {
         await expect(indisponivel).toBeDisabled();
         await expect(card.getByText(/R\$\s?\d/)).toHaveCount(0);
       }
-      await expect(card.getByRole("link", { name: "Ver detalhes" })).toHaveAttribute("href", /\/ingressos\/[a-z-]+\/?$/);
     }
   });
 
@@ -108,14 +104,10 @@ test.describe("Home", () => {
 });
 
 test.describe("Fluxo até o checkout", () => {
-  test("/ingressos usa os mesmos cards e o detalhe abre", async ({ page }) => {
+  test("/ingressos usa os mesmos cards", async ({ page }) => {
     await page.goto("./ingressos/");
     await expect(page.getByRole("heading", { name: /Como você quer participar/ })).toBeVisible();
-    await expect(page.locator("main li")).toHaveCount(5);
-
-    await page.getByRole("link", { name: "Ver detalhes" }).first().click();
-    await expect(page).toHaveURL(/\/ingressos\/start\/?$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Start");
+    await expect(page.locator("main li")).toHaveCount(4);
   });
 
   test("card comprável chega ao checkout com o lote (quando houver)", async ({ page }) => {

@@ -40,9 +40,9 @@ export function FaqSection() {
   return (
     <section aria-labelledby="faq-titulo" className="border-t border-border">
       <div className="container-site py-16 sm:py-24 max-w-3xl">
-        <SectionHeading id="faq-titulo" title="Perguntas frequentes" />
+        <SectionHeading id="faq-titulo" title="Tire suas dúvidas" align="center" />
 
-        <div className="mt-8" aria-live="polite">
+        <div className="mt-10" aria-live="polite">
           {state.status === "loading" ? (
             <ul aria-hidden="true" className="divide-y divide-border animate-pulse">
               {Array.from({ length: 3 }, (_, i) => (
@@ -70,12 +70,13 @@ export function FaqSection() {
                         if (e.currentTarget.open) trackFaqInteraction(faq.pergunta);
                       }}
                     >
-                      <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 font-medium text-vinho [&::-webkit-details-marker]:hidden">
+                      <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 py-5 text-[17px] font-medium text-vinho [&::-webkit-details-marker]:hidden">
                         {faq.pergunta}
-                        <span aria-hidden="true" className="font-display text-ambar-texto text-2xl leading-none group-open:hidden">+</span>
-                        <span aria-hidden="true" className="font-display text-ambar-texto text-2xl leading-none hidden group-open:inline">–</span>
+                        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-marrom transition-transform duration-200 group-open:rotate-180">
+                          <path d="M6 9l6 6 6-6" />
+                        </svg>
                       </summary>
-                      <p className="pb-5 pr-8 text-marrom leading-relaxed">{faq.resposta}</p>
+                      <p className="pb-6 pr-8 text-marrom-suave leading-relaxed">{faq.resposta}</p>
                     </details>
                   </li>
                 ))}

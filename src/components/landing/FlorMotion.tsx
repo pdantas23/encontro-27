@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { assetPath } from "@/lib/utils";
@@ -26,6 +26,7 @@ type Caixa = { x: number; y: number; w: number; h: number };
 
 export function FlorMotion() {
   const cloneRef = useRef<HTMLImageElement>(null);
+  const [pronto, setPronto] = useState(0);
 
   useEffect(() => {
     const clone = cloneRef.current;
@@ -35,6 +36,13 @@ export function FlorMotion() {
     if (!clone || !main || !origem || !destino) return;
 
     const mm = gsap.matchMedia();
+    const origemImg = origem as HTMLImageElement;
+    if (!(origemImg.complete && origemImg.naturalWidth > 0)) {
+      // Aguarda a imagem do hero: o efeito re-executa quando ela carregar.
+      const onLoad = () => setPronto((n) => n + 1);
+      origemImg.addEventListener("load", onLoad, { once: true });
+      return () => origemImg.removeEventListener("load", onLoad);
+    }
 
     /** Caixa em coordenadas do documento. */
     const doc = (el: Element): Caixa => {
@@ -48,7 +56,7 @@ export function FlorMotion() {
       const o = doc(origem);
       const d = doc(destino);
       const w = o.w * escala;
-      return { x: d.x + d.w - w * 0.65, y: d.y + w * 0.7 };
+      return { x: d.x + d.w - w * 0.65, y: d.y + w * 0.5 };
     };
 
     /**
@@ -117,7 +125,7 @@ export function FlorMotion() {
             const limite = prosa ? doc(prosa).x + doc(prosa).w : window.innerWidth * 0.85;
             return (limite + window.innerWidth) / 2 - oc().x;
           };
-          const yDescida = () => window.innerHeight * 0.48 - oc().y; // desce até ~metade da tela
+          const yDescida = () => window.innerHeight * 0.45 - oc().y; // desce até ~45 % da tela
           const fimX = () => encaixeDoc(ESCALA_FINAL).x - oc().x;
           const fimY = () => encaixeDoc(ESCALA_FINAL).y - fim - oc().y;
 
@@ -154,14 +162,17 @@ export function FlorMotion() {
           });
 
           // 0–15 %: sai da coluna central para a direita, encolhendo (curva suave)
-          // (arco: sobe um pouco enquanto sai para a direita, depois desce)
+          // (arco: sobe até perto do topo enquanto sai para a direita, longe do
+          // nome; só depois desce pela margem)
+          const ySubida = () => Math.min(-30, 96 - oc().y);
           tl.to(clone, { x: xDireita, scale: ESCALA_ROTA, ease: "power1.out", duration: 0.15 }, 0)
-            .to(clone, { y: -30, rotation: -3, opacity: 0.82, ease: "sine.out", duration: 0.15 }, 0)
+            .to(clone, { y: ySubida, rotation: -3, opacity: 0.82, ease: "sine.out", duration: 0.15 }, 0)
             // 15–75 %: desce pela margem direita
             .to(clone, { y: yDescida, rotation: -8, duration: 0.6 }, 0.15)
             // 75–100 %: atravessa pela faixa livre (entre a prosa e o título de 5 anos) até o artwork
             .to(clone, { x: fimX, ease: "sine.inOut", duration: 0.25 }, 0.75)
-            .to(clone, { y: fimY, scale: ESCALA_FINAL, rotation: -12, opacity: 0.96, ease: "sine.inOut", duration: 0.25 }, 0.75);
+            // sobe cedo na travessia para passar acima do rótulo "5 anos"
+            .to(clone, { y: fimY, scale: ESCALA_FINAL, rotation: -12, opacity: 0.96, ease: "sine.out", duration: 0.25 }, 0.75);
         } else if (tablet) {
           // Sai junto com o hero (em fixed, "acompanhar a página" = subir na
           // mesma proporção do scroll), um pouco mais rápido, e some.
@@ -228,7 +239,7 @@ export function FlorMotion() {
       clone.style.visibility = "hidden";
       origem.style.visibility = "";
     };
-  }, []);
+  }, [pronto]);
 
   return (
     // eslint-disable-next-line @next/next/no-img-element

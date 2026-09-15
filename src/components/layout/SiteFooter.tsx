@@ -28,10 +28,8 @@ export function SiteFooter() {
     <footer className="border-t border-border bg-papel">
       <div className="container-site grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr]">
         <div>
-          <Link href="/" className="inline-flex min-h-11 items-center gap-2">
-            <Image src={assetPath("/brand/flor-ouro-sm.webp")} alt="" width={32} height={30} loading="lazy" />
-            <span className="font-display text-xl text-vinho">O Encontro</span>
-            <span className="font-serif text-xs text-ambar-texto tracking-[0.25em] mt-1">2027</span>
+          <Link href="/" className="inline-flex min-h-11 items-center" aria-label="O Encontro 2027">
+            <Image src={assetPath("/brand/lockup-2027.webp")} alt="O Encontro 2027" width={875} height={168} loading="lazy" className="h-10 w-auto" />
           </Link>
           <p className="mt-4 max-w-xs text-sm text-marrom-suave leading-relaxed">
             Edição comemorativa de 5 anos.

@@ -53,12 +53,12 @@ export function TicketGrid({ showFallbackLink = true }: { showFallbackLink?: boo
   return (
     <div className="space-y-12">
       <Grupo titulo="Ingressos do evento" itens={evento} colunas="sm:grid-cols-2" />
-      <Grupo titulo="Experiências" itens={experiencias} colunas="sm:grid-cols-2 lg:grid-cols-3" />
+      <Grupo titulo="Experiências" itens={experiencias} colunas="sm:grid-cols-2" />
     </div>
   );
 }
 
-function Grupo({ titulo, itens, colunas }: { titulo: string; itens: Modalidade[]; colunas: string }) {
+function Grupo({ titulo, itens, colunas = "sm:grid-cols-2" }: { titulo: string; itens: Modalidade[]; colunas?: string }) {
   if (itens.length === 0) return null;
   return (
     <div>
