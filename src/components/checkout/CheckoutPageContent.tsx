@@ -76,5 +76,5 @@ export function CheckoutPageContent() {
     return <p>Ingressos esgotados para esta modalidade.</p>;
   }
 
-  return <CheckoutWizard lote={lote} disponivel={disponivel} />;
+  return <CheckoutWizard lote={lote} />;
 }

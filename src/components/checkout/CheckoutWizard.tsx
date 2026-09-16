@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,32 +11,31 @@ import { trackBeginCheckout, trackAddPaymentInfo } from "@/lib/tracking/events";
 import { formatCurrencyBRL } from "@/lib/utils";
 import type { LoteComModalidade } from "@/types/checkout";
 
-type Step = 1 | 2 | 3 | 4;
+/**
+ * REGRA TEMPORÁRIA — quantidade fixa em 1.
+ * O pagamento usa links fixos da Hypercash (um valor por lote), então cada
+ * pedido cobre exatamente 1 unidade. A mesma regra vale no banco
+ * (migration 0003, policy de insert). Quando a integração Hypercash cobrar
+ * por pedido (API + webhook), revisar a policy antes de liberar quantidade > 1.
+ */
+const QUANTIDADE = 1;
 
-interface ParticipanteInput {
-  nome: string;
-  email: string;
-}
+type Step = 1 | 2;
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-export function CheckoutWizard({
-  lote,
-  disponivel,
-}: {
-  lote: LoteComModalidade;
-  disponivel: number | null;
-}) {
+export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
   const [step, setStep] = useState<Step>(1);
-  const [quantidade, setQuantidade] = useState(1);
   const [comprador, setComprador] = useState<CompradorFormValues | null>(null);
-  const [participantes, setParticipantes] = useState<ParticipanteInput[]>([{ nome: "", email: "" }]);
   const [aceiteTermos, setAceiteTermos] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // Pedido já gravado mas sem participante (falha de rede no 2º insert):
+  // o "tentar novamente" completa este pedido em vez de criar outro.
+  const [pedidoPendente, setPedidoPendente] = useState<string | null>(null);
 
-  const maxQuantidade = disponivel !== null ? Math.max(1, Math.min(disponivel, 20)) : 20;
   const precoUnitario = lote.preco ?? 0;
+  const valorTotal = precoUnitario * QUANTIDADE;
 
   const {
     register: registerComprador,
@@ -46,69 +46,48 @@ export function CheckoutWizard({
     defaultValues: comprador ?? undefined,
   });
 
-  function handleQuantidadeSubmit() {
-    trackBeginCheckout(lote.modalidade.slug, quantidade);
-    setParticipantes((prev) => Array.from({ length: quantidade }, (_, i) => prev[i] ?? { nome: "", email: "" }));
+  function handleComprador(values: CompradorFormValues) {
+    if (!comprador) trackBeginCheckout(lote.modalidade.slug, QUANTIDADE);
+    setComprador(values);
+    setErro(null);
     setStep(2);
   }
 
-  // Com 1 ingresso, o participante é o próprio comprador: pula a etapa de
-  // participantes (dados já foram digitados). Com mais de 1, o comprador
-  // vem preenchido como participante 1 e pode ser editado.
-  const participanteEhComprador = quantidade === 1;
-
-  function handleComprador(values: CompradorFormValues) {
-    setComprador(values);
-    setParticipantes((prev) => {
-      const next = [...prev];
-      const primeiro = next[0] ?? { nome: "", email: "" };
-      if (!primeiro.nome.trim()) next[0] = { nome: values.nome, email: values.email };
-      return next;
-    });
-    setStep(participanteEhComprador ? 4 : 3);
-  }
-
-  function handleParticipantesSubmit() {
-    const invalido = participantes.some((p) => p.nome.trim().length < 3);
-    if (invalido) {
-      setErro("Preencha o nome completo de todos os participantes.");
+  function irParaPagamento(pedidoId: string, email: string) {
+    trackAddPaymentInfo(lote.modalidade.slug);
+    // Navegação de página inteira proposital: output "export" não tem servidor.
+    // Vai direto ao link de pagamento do lote; a página "pendente" fica como
+    // retorno e fallback quando o lote não tiver link.
+    if (lote.hypercash_checkout_url) {
+      window.location.href = lote.hypercash_checkout_url;
       return;
     }
-    setErro(null);
-    setStep(4);
-  }
-
-  function updateParticipante(index: number, field: keyof ParticipanteInput, value: string) {
-    setParticipantes((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
-      return next;
-    });
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.href = `${basePath}/checkout/pendente?pedido=${pedidoId}&email=${encodeURIComponent(email)}`;
   }
 
   async function handleConfirmar() {
-    if (!comprador || !aceiteTermos) return;
+    if (!comprador || !aceiteTermos || enviando) return;
     setEnviando(true);
     setErro(null);
 
-    try {
-      const supabase = createClient();
-      const utms = getStoredUtms();
-      const valorTotal = Math.round(quantidade * precoUnitario * 100) / 100;
+    const supabase = createClient();
 
+    try {
       // O id é gerado aqui: o comprador anônimo pode inserir, mas não pode
-      // ler pedidos (RLS), então um insert com ".select()" falha. Sem
-      // representation, o insert passa e o id já é conhecido.
-      const pedidoId = crypto.randomUUID();
-      const { error: pedidoError } = await supabase
-        .from("pedidos_encontro27")
-        .insert({
-          id: pedidoId,
+      // ler pedidos (RLS), então um insert com ".select()" falharia.
+      let pedidoId = pedidoPendente;
+
+      if (!pedidoId) {
+        const novoId = crypto.randomUUID();
+        const utms = getStoredUtms();
+        const { error: pedidoError } = await supabase.from("pedidos_encontro27").insert({
+          id: novoId,
           comprador_nome: comprador.nome,
           comprador_email: comprador.email,
           comprador_whatsapp: comprador.whatsapp,
           lote_id: lote.id,
-          quantidade,
+          quantidade: QUANTIDADE,
           valor_unitario_registrado: precoUnitario,
           valor_total: valorTotal,
           hypercash_url_usado: lote.hypercash_checkout_url,
@@ -120,33 +99,27 @@ export function CheckoutWizard({
           aceite_termos: true,
           aceite_termos_em: new Date().toISOString(),
         });
+        if (pedidoError) throw pedidoError;
+        pedidoId = novoId;
+        setPedidoPendente(novoId);
+      }
 
-      if (pedidoError) throw pedidoError;
-
-      const { error: participantesError } = await supabase.from("participantes_encontro27").insert(
-        participantes.map((p) => ({
-          pedido_id: pedidoId,
-          nome: p.nome,
-          email: p.email || null,
-        })),
-      );
-
+      // Com 1 ingresso, o participante é o próprio comprador.
+      const { error: participantesError } = await supabase.from("participantes_encontro27").insert({
+        pedido_id: pedidoId,
+        nome: comprador.nome,
+        email: comprador.email,
+      });
       if (participantesError) throw participantesError;
 
-      trackAddPaymentInfo(lote.modalidade.slug);
-
-      // Pedido registrado: vai direto para o pagamento na Hypercash (decisão do
-      // Aerton, 15/09/2026). A página "pendente" fica como retorno e fallback
-      // quando o lote não tiver link de pagamento. Navegação de página inteira
-      // proposital: output "export" não tem servidor.
-      if (lote.hypercash_checkout_url) {
-        window.location.href = lote.hypercash_checkout_url;
-        return;
-      }
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.href = `${basePath}/checkout/pendente?pedido=${pedidoId}&email=${encodeURIComponent(comprador.email)}`;
+      setPedidoPendente(null);
+      irParaPagamento(pedidoId, comprador.email);
     } catch {
-      setErro("Não foi possível registrar seu pedido. Tente novamente em instantes.");
+      setErro(
+        pedidoPendente
+          ? "Seu pedido foi registrado, mas faltou concluir o cadastro do participante. Tente novamente."
+          : "Não foi possível registrar seu pedido. Verifique sua conexão e tente novamente.",
+      );
       setEnviando(false);
     }
   }
@@ -155,114 +128,67 @@ export function CheckoutWizard({
     <div>
       <h1>{lote.modalidade.nome}</h1>
       <p>{lote.nome}</p>
-      <p>
-        Etapa {participanteEhComprador && step === 4 ? 3 : step} de {participanteEhComprador ? 3 : 4}
-      </p>
+      <p>Etapa {step} de 2</p>
 
-      {/* Resumo sempre visível — preço, quantidade e subtotal nunca ficam só na última etapa */}
+      {/* Resumo sempre visível — preço e total nunca ficam só na última etapa */}
       <div style={{ border: "1px solid #ddd", padding: 12, margin: "16px 0" }}>
-        <p>Valor unitário: {formatCurrencyBRL(precoUnitario)}</p>
-        <p>Quantidade: {quantidade}</p>
-        <p>Subtotal: {formatCurrencyBRL(quantidade * precoUnitario)}</p>
+        <p>Valor: {formatCurrencyBRL(precoUnitario)}</p>
+        <p>Quantidade: 1 ingresso por pedido</p>
+        <p>Total: {formatCurrencyBRL(valorTotal)}</p>
       </div>
 
       {step === 1 && (
-        <div>
-          <h2>Quantidade de ingressos</h2>
-          <input
-            type="number"
-            min={1}
-            max={maxQuantidade}
-            value={quantidade}
-            onChange={(event) =>
-              setQuantidade(Math.max(1, Math.min(maxQuantidade, Number(event.target.value) || 1)))
-            }
-          />
-          <p>
-            <button onClick={handleQuantidadeSubmit}>Continuar</button>
-          </p>
-        </div>
-      )}
-
-      {step === 2 && (
         <form onSubmit={handleSubmitComprador(handleComprador)}>
           <h2>Seus dados</h2>
+          <p>O ingresso será emitido em seu nome.</p>
           <label>
             Nome completo
-            <input {...registerComprador("nome")} />
+            <input autoComplete="name" {...registerComprador("nome")} />
           </label>
           {compradorErrors.nome && <p style={{ color: "crimson" }}>{compradorErrors.nome.message}</p>}
           <label>
             E-mail
-            <input type="email" {...registerComprador("email")} />
+            <input type="email" autoComplete="email" {...registerComprador("email")} />
           </label>
           {compradorErrors.email && <p style={{ color: "crimson" }}>{compradorErrors.email.message}</p>}
           <label>
             WhatsApp (com DDD)
-            <input {...registerComprador("whatsapp")} />
+            <input inputMode="tel" autoComplete="tel" {...registerComprador("whatsapp")} />
           </label>
           {compradorErrors.whatsapp && <p style={{ color: "crimson" }}>{compradorErrors.whatsapp.message}</p>}
           <p>
-            <button type="button" onClick={() => setStep(1)}>
-              Voltar
-            </button>{" "}
             <button type="submit">Continuar</button>
           </p>
         </form>
       )}
 
-      {step === 3 && (
-        <div>
-          <h2>Dados dos participantes</h2>
-          {participantes.map((participante, index) => (
-            <fieldset key={index} style={{ marginBottom: 12 }}>
-              <legend>{index === 0 ? "Participante 1 (você, se for participar)" : `Participante ${index + 1}`}</legend>
-              <label>
-                Nome completo
-                <input
-                  value={participante.nome}
-                  onChange={(event) => updateParticipante(index, "nome", event.target.value)}
-                />
-              </label>
-              <label>
-                E-mail (opcional)
-                <input
-                  type="email"
-                  value={participante.email}
-                  onChange={(event) => updateParticipante(index, "email", event.target.value)}
-                />
-              </label>
-            </fieldset>
-          ))}
-          {erro && <p style={{ color: "crimson" }}>{erro}</p>}
-          <button onClick={() => setStep(2)}>Voltar</button>{" "}
-          <button onClick={handleParticipantesSubmit}>Continuar</button>
-        </div>
-      )}
-
-      {step === 4 && comprador && (
+      {step === 2 && comprador && (
         <div>
           <h2>Resumo e pagamento</h2>
           <p>
             Comprador: {comprador.nome} ({comprador.email})
           </p>
-          <p>Participantes: {participantes.map((p) => p.nome).join(", ")}</p>
-          <p>Valor total: {formatCurrencyBRL(quantidade * precoUnitario)}</p>
+          <p>Participante: {comprador.nome}</p>
+          <p>Valor total: {formatCurrencyBRL(valorTotal)}</p>
           <p>
             Ao confirmar, você será direcionado para o pagamento seguro na Hypercash. O ingresso é liberado assim
             que o pagamento for aprovado.
           </p>
           <label>
             <input type="checkbox" checked={aceiteTermos} onChange={(event) => setAceiteTermos(event.target.checked)} />{" "}
-            Li e aceito os <a href="/termos">termos de compra</a>.
+            Li e aceito os <Link href="/termos">termos de compra</Link>.
           </label>
-          {erro && <p style={{ color: "crimson" }}>{erro}</p>}
+          {erro && (
+            <p role="alert" style={{ color: "crimson" }}>
+              {erro}
+            </p>
+          )}
           <p>
-            <button onClick={() => setStep(participanteEhComprador ? 2 : 3)} disabled={enviando}>
+            <button type="button" onClick={() => setStep(1)} disabled={enviando || pedidoPendente !== null}>
               Voltar
             </button>{" "}
-            <button onClick={handleConfirmar} disabled={enviando || !aceiteTermos}>
-              {enviando ? "Enviando..." : "Confirmar e ir para pagamento"}
+            <button type="button" onClick={handleConfirmar} disabled={enviando || !aceiteTermos}>
+              {enviando ? "Enviando..." : pedidoPendente ? "Tentar novamente" : "Confirmar e ir para pagamento"}
             </button>
           </p>
         </div>

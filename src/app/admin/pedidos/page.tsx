@@ -34,6 +34,7 @@ export default function AdminPedidosPage() {
   const { user, loading: authLoading } = useAdminAuth();
   const [pedidos, setPedidos] = useState<PedidoComLote[] | null>(null);
   const [filtro, setFiltro] = useState<StatusPagamento | "todos">("todos");
+  const [busca, setBusca] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [participantesPorPedido, setParticipantesPorPedido] = useState<Record<string, ParticipanteRow[]>>({});
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -119,6 +120,18 @@ export default function AdminPedidosPage() {
 
   if (authLoading || !user) return null;
 
+  // Conciliação com a Hypercash é manual (link fixo, sem id do pedido):
+  // a equipe procura pelo e-mail/nome/WhatsApp que aparece no pagamento.
+  const termo = busca.trim().toLowerCase();
+  const pedidosVisiveis = (pedidos ?? []).filter((p) => {
+    if (!termo) return true;
+    return (
+      p.comprador_nome.toLowerCase().includes(termo) ||
+      p.comprador_email.toLowerCase().includes(termo) ||
+      p.comprador_whatsapp.replace(/\D/g, "").includes(termo.replace(/\D/g, "") || "\u0000")
+    );
+  });
+
   return (
     <AdminLayout user={user}>
       <h1>Pedidos</h1>
@@ -138,11 +151,22 @@ export default function AdminPedidosPage() {
         </select>
       </label>
 
+      <label style={{ display: "block", marginTop: 12 }}>
+        Buscar por nome, e-mail ou WhatsApp
+        <input
+          type="search"
+          value={busca}
+          onChange={(event) => setBusca(event.target.value)}
+          placeholder="Ex.: o e-mail que aparece na Hypercash"
+          style={{ display: "block", marginTop: 4, maxWidth: 480 }}
+        />
+      </label>
+
       {feedback && <p style={{ marginTop: 12 }}>{feedback}</p>}
 
       {!pedidos ? (
         <p style={{ marginTop: 16 }}>Carregando...</p>
-      ) : pedidos.length === 0 ? (
+      ) : pedidosVisiveis.length === 0 ? (
         <p style={{ marginTop: 16 }}>Nenhum pedido encontrado.</p>
       ) : (
         <table style={{ marginTop: 16, borderCollapse: "collapse", width: "100%" }}>
@@ -158,7 +182,7 @@ export default function AdminPedidosPage() {
             </tr>
           </thead>
           <tbody>
-            {pedidos.map((pedido) => (
+            {pedidosVisiveis.map((pedido) => (
               <Fragment key={pedido.id}>
                 <tr>
                   <td style={tdStyle}>{new Date(pedido.created_at).toLocaleString("pt-BR")}</td>

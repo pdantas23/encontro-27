@@ -110,6 +110,30 @@ test.describe("Fluxo até o checkout", () => {
     await expect(page.locator("main li")).toHaveCount(4);
   });
 
+  test("checkout: 1 ingresso por pedido, 2 etapas, termos com basePath", async ({ page }) => {
+    await page.goto("./#ingressos");
+    await expect(page.locator("#ingressos .animate-pulse")).toHaveCount(0);
+    const comprar = page.locator("#ingressos").getByRole("link", { name: /^Comprar / }).first();
+    test.skip((await comprar.count()) === 0, "Nenhum lote comprável no banco.");
+    await comprar.click();
+    await expect(page).toHaveURL(/\/checkout\/?\?lote=/);
+
+    await expect(page.getByText("Etapa 1 de 2")).toBeVisible();
+    await expect(page.getByRole("spinbutton")).toHaveCount(0); // sem seletor de quantidade
+    await expect(page.getByText("Quantidade: 1 ingresso por pedido")).toBeVisible();
+
+    await page.getByRole("textbox", { name: "Nome completo" }).fill("Teste E2E");
+    await page.getByRole("textbox", { name: "E-mail" }).fill("e2e@exemplo.invalid");
+    await page.getByRole("textbox", { name: "WhatsApp (com DDD)" }).fill("86999999999");
+    await page.getByRole("button", { name: "Continuar" }).click();
+
+    await expect(page.getByText("Etapa 2 de 2")).toBeVisible();
+    await expect(page.getByText("Participante: Teste E2E")).toBeVisible();
+    await expect(page.getByRole("link", { name: "termos de compra" })).toHaveAttribute("href", /\/encontro27\/termos\/?$/);
+    // não confirma: confirmar cria pedido real e sai para a Hypercash
+    await expect(page.getByRole("button", { name: /Confirmar e ir para pagamento/ })).toBeDisabled();
+  });
+
   test("card comprável chega ao checkout com o lote (quando houver)", async ({ page }) => {
     await page.goto("./#ingressos");
     // espera a ilha de ingressos terminar de carregar antes de decidir
