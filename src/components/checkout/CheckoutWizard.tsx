@@ -82,6 +82,12 @@ export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
 
     const supabase = createClient();
 
+    // Espelha pedidoPendente para uso no catch: setPedidoPendente só vale no
+    // próximo render, então ler o state aqui diria "não registrado" para um
+    // pedido que acabou de ser gravado — e o comprador veria "não foi possível
+    // registrar seu pedido" quando na verdade só o link de pagamento falhou.
+    let pedidoRegistrado = pedidoPendente;
+
     try {
       // O id é gerado aqui: o comprador anônimo pode inserir, mas não pode
       // ler pedidos (RLS), então um insert com ".select()" falharia.
@@ -110,6 +116,7 @@ export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
         });
         if (pedidoError) throw pedidoError;
         pedidoId = novoId;
+        pedidoRegistrado = novoId;
         setPedidoPendente(novoId);
       }
 
@@ -130,7 +137,7 @@ export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
       await irParaPagamento(pedidoId);
     } catch {
       setErro(
-        pedidoPendente
+        pedidoRegistrado
           ? "Seu pedido está registrado, mas não conseguimos gerar o link de pagamento agora. Tente novamente."
           : "Não foi possível registrar seu pedido. Verifique sua conexão e tente novamente.",
       );
