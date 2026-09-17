@@ -56,13 +56,17 @@ export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
   async function irParaPagamento(pedidoId: string) {
     trackAddPaymentInfo(lote.modalidade.slug);
 
-    const supabase = createClient();
-    const { data, error } = await supabase.functions.invoke<{ checkoutUrl?: string; error?: string }>(
-      "encontro27-criar-checkout",
-      { body: { pedidoId } },
-    );
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL não configurada");
 
-    if (error || !data?.checkoutUrl) {
+    const response = await fetch(`${apiUrl}/criar-checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pedidoId }),
+    });
+    const data = (await response.json().catch(() => null)) as { checkoutUrl?: string; error?: string } | null;
+
+    if (!response.ok || !data?.checkoutUrl) {
       throw new Error(data?.error ?? "falha_ao_criar_checkout");
     }
 
