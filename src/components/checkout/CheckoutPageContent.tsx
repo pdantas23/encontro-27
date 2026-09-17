@@ -67,8 +67,8 @@ export function CheckoutPageContent() {
     return <p>Esta modalidade não está disponível para compra no momento.</p>;
   }
 
-  if (lote.preco == null || !lote.hypercash_checkout_url) {
-    return <p>Esta modalidade ainda não está com preço e pagamento configurados. Volte em breve.</p>;
+  if (lote.preco == null) {
+    return <p>Esta modalidade ainda não está com preço configurado. Volte em breve.</p>;
   }
 
   const disponivel = lote.quantidade == null ? null : lote.quantidade - lote.quantidade_vendida;
