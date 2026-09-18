@@ -331,8 +331,32 @@ export interface Database {
         Args: Record<string, never>;
         Returns: Json;
       };
+      meus_ingressos_encontro27: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
       checkin_encontro27: {
         Args: { p_identificador: string };
+        Returns: Json;
+      };
+      solicitar_transferencia_titularidade_encontro27: {
+        Args: { p_identificador_unico: string; p_email_destino: string };
+        Returns: Json;
+      };
+      cancelar_transferencia_titularidade_encontro27: {
+        Args: { p_transferencia_id: string };
+        Returns: Json;
+      };
+      minhas_transferencias_pendentes_encontro27: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
+      aceitar_transferencia_titularidade_encontro27: {
+        Args: { p_transferencia_id: string };
+        Returns: Json;
+      };
+      recusar_transferencia_titularidade_encontro27: {
+        Args: { p_transferencia_id: string };
         Returns: Json;
       };
     };

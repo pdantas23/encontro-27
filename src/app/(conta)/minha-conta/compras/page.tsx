@@ -1,6 +1,5 @@
 "use client";
 
-import { MinhaContaNav } from "@/components/layout/MinhaContaNav";
 import { useMeusPedidos } from "@/hooks/useMeusPedidos";
 import { formatCurrencyBRL } from "@/lib/utils";
 
@@ -10,16 +9,14 @@ export default function MinhasComprasPage() {
   if (loading) return null;
 
   return (
-    <>
-      <MinhaContaNav />
-
-      <main id="conteudo" className="container-site py-10 sm:py-14">
+    <main id="conteudo" className="container-site py-10 sm:py-14">
+      <div className="mx-auto max-w-3xl text-center">
         <h1 className="font-display text-2xl text-heading">Minhas compras</h1>
 
         {!pedidos || pedidos.length === 0 ? (
           <p className="mt-6 text-[17px] leading-7 text-marrom">Nenhuma compra ainda.</p>
         ) : (
-          <div className="mt-6 max-w-3xl overflow-x-auto">
+          <div className="mt-6 overflow-x-auto">
             <table className="w-full border-separate border-spacing-0 text-[15px]">
               <thead>
                 <tr>
@@ -27,7 +24,7 @@ export default function MinhasComprasPage() {
                     <th
                       key={coluna}
                       scope="col"
-                      className="eyebrow whitespace-nowrap border-b border-border bg-areia px-3 py-3 text-left text-[0.65rem] text-marrom-suave first:rounded-l-lg last:rounded-r-lg"
+                      className="eyebrow whitespace-nowrap border-b border-border bg-areia px-3 py-3 text-center text-[0.65rem] text-marrom-suave first:rounded-l-lg last:rounded-r-lg"
                     >
                       {coluna}
                     </th>
@@ -52,7 +49,7 @@ export default function MinhasComprasPage() {
             </table>
           </div>
         )}
-      </main>
-    </>
+      </div>
+    </main>
   );
 }

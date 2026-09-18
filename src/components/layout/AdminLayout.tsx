@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { cn, assetPath } from "@/lib/utils";
+import { PainelFooter } from "@/components/layout/PainelFooter";
+import { PageTransition } from "@/components/layout/PageTransition";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -63,7 +65,7 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
       <button
         type="button"
         onClick={handleLogout}
-        className="mt-3 inline-flex min-h-10 items-center rounded-pill border border-dourado px-4 text-sm font-semibold text-vinho hover:bg-areia"
+        className="mt-3 inline-flex min-h-10 cursor-pointer items-center rounded-pill border border-dourado px-4 text-sm font-semibold text-vinho hover:bg-areia"
       >
         Sair
       </button>
@@ -102,7 +104,12 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
         {userBox}
       </aside>
 
-      <main className="admin-content min-w-0 px-4 py-6 sm:px-8 sm:py-8">{children}</main>
+      <div className="flex min-w-0 flex-col">
+        <main className="admin-content flex-1 px-4 py-6 sm:px-8 sm:py-8">
+          <PageTransition>{children}</PageTransition>
+        </main>
+        <PainelFooter />
+      </div>
     </div>
   );
 }

@@ -12,7 +12,7 @@ import { CTAButton } from "@/components/ui/CTAButton";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/minha-conta";
+  const redirect = searchParams.get("redirect") || "/minha-conta/ingressos";
 
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -39,7 +39,8 @@ export function LoginForm() {
     router.push(redirect);
   }
 
-  const linkCadastro = redirect === "/minha-conta" ? "/cadastro" : `/cadastro?redirect=${encodeURIComponent(redirect)}`;
+  const linkCadastro =
+    redirect === "/minha-conta/ingressos" ? "/cadastro" : `/cadastro?redirect=${encodeURIComponent(redirect)}`;
 
   return (
     <div className="rounded-card border border-border bg-papel p-8 shadow-card">

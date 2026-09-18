@@ -73,7 +73,7 @@ export function PedidoStatus() {
   useEffect(() => {
     if (pedido?.status_pagamento !== "aprovado") return;
     const timer = setTimeout(() => {
-      router.push("/minha-conta");
+      router.push("/minha-conta/ingressos");
     }, REDIRECT_APROVADO_MS);
     return () => clearTimeout(timer);
   }, [pedido?.status_pagamento, router]);
