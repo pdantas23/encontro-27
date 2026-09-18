@@ -4,14 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CTAButton } from "@/components/ui/CTAButton";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { createClient } from "@/lib/supabase/client";
-import { compradorSchema, type CompradorFormValues } from "@/lib/validators/checkout";
 import { getStoredUtms } from "@/lib/tracking/utms";
-import { trackBeginCheckout, trackAddPaymentInfo } from "@/lib/tracking/events";
-import { formatCurrencyBRL } from "@/lib/utils";
+import { trackBeginCheckout, trackAddPaymentInfo, trackSelectTicket } from "@/lib/tracking/events";
+import { cn, formatCurrencyBRL } from "@/lib/utils";
 import type { LoteComModalidade } from "@/types/checkout";
+import type { PerfilComprador } from "./CheckoutAuthGate";
 
 /**
  * REGRA TEMPORÁRIA — quantidade fixa em 1.
@@ -24,10 +22,18 @@ const QUANTIDADE = 1;
 
 type Step = 1 | 2;
 
-export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; userEmail: string }) {
+interface Props {
+  lote: LoteComModalidade;
+  /** Lote do VIP, oferecido só a quem está comprando o Start. */
+  upgrade: LoteComModalidade | null;
+  perfil: PerfilComprador;
+}
+
+export function CheckoutWizard({ lote, upgrade, perfil }: Props) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
-  const [comprador, setComprador] = useState<CompradorFormValues | null>(null);
+  const [loteEscolhido, setLoteEscolhido] = useState<LoteComModalidade>(lote);
+  const [checkoutIniciado, setCheckoutIniciado] = useState(false);
   const [aceiteTermos, setAceiteTermos] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -37,29 +43,31 @@ export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; u
   const [pedidoPendente, setPedidoPendente] = useState<string | null>(null);
   const [participanteRegistrado, setParticipanteRegistrado] = useState(false);
 
-  const precoUnitario = lote.preco ?? 0;
+  const precoUnitario = loteEscolhido.preco ?? 0;
   const valorTotal = precoUnitario * QUANTIDADE;
 
-  const {
-    register: registerComprador,
-    handleSubmit: handleSubmitComprador,
-    formState: { errors: compradorErrors },
-  } = useForm<CompradorFormValues>({
-    resolver: zodResolver(compradorSchema),
-    // O e-mail vem da sessão e não é editável: é ele que liga o pedido à conta
-    // onde o ingresso e o QR Code aparecem depois.
-    defaultValues: { ...(comprador ?? {}), email: userEmail },
-  });
+  // Nome e WhatsApp vêm do cadastro da conta (não são mais pedidos aqui). Contas
+  // antigas, criadas sem esses dados, precisam completar o perfil antes de comprar.
+  const comprador =
+    perfil.nome && perfil.whatsapp ? { email: perfil.email, nome: perfil.nome, whatsapp: perfil.whatsapp } : null;
 
-  function handleComprador(values: CompradorFormValues) {
-    if (!comprador) trackBeginCheckout(lote.modalidade.slug, QUANTIDADE);
-    setComprador({ ...values, email: userEmail });
+  function escolherIngresso(escolhido: LoteComModalidade) {
+    if (escolhido.id === loteEscolhido.id) return;
+    setLoteEscolhido(escolhido);
+    trackSelectTicket(escolhido.modalidade.slug, escolhido.modalidade.nome);
+  }
+
+  function handleContinuar() {
+    if (!checkoutIniciado) {
+      trackBeginCheckout(loteEscolhido.modalidade.slug, QUANTIDADE);
+      setCheckoutIniciado(true);
+    }
     setErro(null);
     setStep(2);
   }
 
   async function irParaPagamento(pedidoId: string, email: string, abaPagamento: Window | null) {
-    trackAddPaymentInfo(lote.modalidade.slug);
+    trackAddPaymentInfo(loteEscolhido.modalidade.slug);
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL não configurada");
@@ -122,11 +130,11 @@ export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; u
           comprador_nome: comprador.nome,
           comprador_email: comprador.email,
           comprador_whatsapp: comprador.whatsapp,
-          lote_id: lote.id,
+          lote_id: loteEscolhido.id,
           quantidade: QUANTIDADE,
           valor_unitario_registrado: precoUnitario,
           valor_total: valorTotal,
-          hypercash_url_usado: lote.hypercash_checkout_url,
+          hypercash_url_usado: loteEscolhido.hypercash_checkout_url,
           utm_source: utms.utm_source,
           utm_medium: utms.utm_medium,
           utm_campaign: utms.utm_campaign,
@@ -167,13 +175,30 @@ export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; u
     }
   }
 
+  if (!comprador) {
+    return (
+      <div className="max-w-2xl">
+        <h1 className="font-display text-heading text-3xl sm:text-4xl leading-[1.1]">Complete seu cadastro</h1>
+        <p className="mt-4 text-[17px] leading-7 text-marrom">
+          Para emitir o ingresso, precisamos do seu nome e WhatsApp, e a sua conta ainda não tem esses dados.
+        </p>
+        <CTAButton href="/minha-conta/dados" size="lg" className="mt-8">
+          Completar meus dados
+        </CTAButton>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl">
-      <p className="rotulo-secao text-ambar-texto">Etapa {step} de 2</p>
+      <p className="eyebrow text-marrom-suave">Finalizar compra</p>
+      <p className="rotulo-secao mt-2 text-ambar-texto">Etapa {step} de 2</p>
       <span aria-hidden="true" className="filete mt-4" />
 
-      <h1 className="font-display text-heading mt-5 text-3xl sm:text-4xl leading-[1.1]">{lote.modalidade.nome}</h1>
-      <p className="mt-2 text-marrom-suave">{lote.nome}</p>
+      <h1 className="font-display text-heading mt-5 text-3xl sm:text-4xl leading-[1.1]">
+        {loteEscolhido.modalidade.nome}
+      </h1>
+      <p className="mt-2 text-marrom-suave">{loteEscolhido.nome}</p>
 
       {/* Resumo sempre visível — preço e total nunca ficam só na última etapa */}
       <dl className="mt-8 rounded-card border border-border bg-areia px-5 py-4 text-[15px]">
@@ -192,50 +217,55 @@ export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; u
       </dl>
 
       {step === 1 && (
-        <form onSubmit={handleSubmitComprador(handleComprador)} className="mt-10">
-          <h2 className="font-display text-2xl text-heading">Seus dados</h2>
-          <p className="mt-2 text-marrom">O ingresso será emitido em seu nome.</p>
+        <div className="mt-10">
+          <h2 className="font-display text-2xl text-heading">Escolha do ingresso</h2>
+          <p className="mt-2 text-marrom">
+            {upgrade
+              ? "Confirme o Start ou faça upgrade para o VIP."
+              : "Confirme o ingresso que você quer comprar."}
+          </p>
 
-          <div className="mt-6 flex flex-col gap-4">
-            <div>
-              <label>
-                Nome completo
-                <input autoComplete="name" {...registerComprador("nome")} />
-              </label>
-              {compradorErrors.nome && <p className="mt-2 border-l-2 border-vermelho pl-3 text-sm text-marrom">{compradorErrors.nome.message}</p>}
+          <fieldset className="mt-6">
+            <legend className="sr-only">Ingresso</legend>
+            <div className="flex flex-col gap-4">
+              <OpcaoIngresso
+                lote={lote}
+                selecionado={loteEscolhido.id === lote.id}
+                escolhivel={upgrade !== null}
+                onEscolher={() => escolherIngresso(lote)}
+              />
+              {upgrade && (
+                <OpcaoIngresso
+                  lote={upgrade}
+                  selecionado={loteEscolhido.id === upgrade.id}
+                  escolhivel
+                  rotulo="Upgrade"
+                  onEscolher={() => escolherIngresso(upgrade)}
+                />
+              )}
             </div>
-            <div>
-              <label>
-                E-mail
-                <input type="email" readOnly value={userEmail} className="bg-areia text-marrom-suave" />
-              </label>
-              <p className="mt-2 text-sm text-marrom-suave">
-                E-mail da conta em que você entrou. O ingresso e o QR Code ficam nela.
-              </p>
-            </div>
-            <div>
-              <label>
-                WhatsApp (com DDD)
-                <input inputMode="tel" autoComplete="tel" {...registerComprador("whatsapp")} />
-              </label>
-              {compradorErrors.whatsapp && <p className="mt-2 border-l-2 border-vermelho pl-3 text-sm text-marrom">{compradorErrors.whatsapp.message}</p>}
-            </div>
-          </div>
+          </fieldset>
 
-          <CTAButton type="submit" size="lg" className="mt-8 w-full sm:w-auto">
+          <CTAButton type="button" size="lg" onClick={handleContinuar} className="mt-8 w-full sm:w-auto">
             Continuar
           </CTAButton>
-        </form>
+        </div>
       )}
 
-      {step === 2 && comprador && (
+      {step === 2 && (
         <div className="mt-10">
           <h2 className="font-display text-2xl text-heading">Resumo e pagamento</h2>
 
           <dl className="mt-6 divide-y divide-border border-y border-border text-[15px]">
             <div className="flex flex-wrap justify-between gap-2 py-3">
+              <dt className="text-marrom-suave">Ingresso</dt>
+              <dd className="text-marrom">{loteEscolhido.modalidade.nome}</dd>
+            </div>
+            <div className="flex flex-wrap justify-between gap-2 py-3">
               <dt className="text-marrom-suave">Comprador</dt>
-              <dd className="text-marrom">{comprador.nome} ({comprador.email})</dd>
+              <dd className="text-marrom">
+                {comprador.nome} ({comprador.email})
+              </dd>
             </div>
             <div className="flex flex-wrap justify-between gap-2 py-3">
               <dt className="text-marrom-suave">Participante</dt>
@@ -275,12 +305,7 @@ export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; u
           )}
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row-reverse sm:justify-end">
-            <CTAButton
-              type="button"
-              size="lg"
-              onClick={handleConfirmar}
-              disabled={enviando || !aceiteTermos}
-            >
+            <CTAButton type="button" size="lg" onClick={handleConfirmar} disabled={enviando || !aceiteTermos}>
               {enviando ? "Enviando…" : pedidoPendente ? "Tentar novamente" : "Confirmar e ir para pagamento"}
             </CTAButton>
             <CTAButton
@@ -296,5 +321,63 @@ export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; u
         </div>
       )}
     </div>
+  );
+}
+
+interface OpcaoIngressoProps {
+  lote: LoteComModalidade;
+  selecionado: boolean;
+  /** Só há o que escolher quando existe upgrade; sozinho, o ingresso aparece só como confirmação. */
+  escolhivel: boolean;
+  rotulo?: string;
+  onEscolher: () => void;
+}
+
+function OpcaoIngresso({ lote, selecionado, escolhivel, rotulo, onEscolher }: OpcaoIngressoProps) {
+  return (
+    <label
+      className={cn(
+        "flex gap-4 rounded-card border px-5 py-5 font-normal transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ambar",
+        selecionado ? "border-ambar-escuro bg-areia" : "border-border bg-papel hover:bg-areia/50",
+        escolhivel ? "cursor-pointer" : "cursor-default",
+      )}
+    >
+      <input type="radio" name="ingresso" checked={selecionado} onChange={onEscolher} className="sr-only" />
+
+      {escolhivel && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "mt-1.5 grid size-5 shrink-0 place-items-center rounded-full border",
+            selecionado ? "border-ambar-escuro bg-ambar-escuro" : "border-dourado",
+          )}
+        >
+          {selecionado && <span className="size-2 rounded-full bg-papel" />}
+        </span>
+      )}
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+          <div>
+            {rotulo && <span className="rotulo-secao text-ambar-texto text-[0.8rem]">{rotulo}</span>}
+            <div className="font-display text-2xl leading-snug text-heading">{lote.modalidade.nome}</div>
+          </div>
+          <div className="font-display text-xl text-vinho">{formatCurrencyBRL(lote.preco ?? 0)}</div>
+        </div>
+
+        {lote.modalidade.descricao && (
+          <p className="mt-2 text-[15px] leading-6 text-marrom">{lote.modalidade.descricao}</p>
+        )}
+
+        <Link
+          href={`/ingressos/${lote.modalidade.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex min-h-11 items-center text-[15px] text-vinho underline underline-offset-4 decoration-ambar hover:decoration-ambar-escuro"
+        >
+          Ver o que inclui
+        </Link>
+      </div>
+    </label>
   );
 }

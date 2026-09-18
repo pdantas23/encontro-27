@@ -52,5 +52,5 @@ export interface LoteComModalidade {
   quantidade_vendida: number;
   status: string;
   hypercash_checkout_url: string | null;
-  modalidade: { slug: string; nome: string };
+  modalidade: { slug: string; nome: string; descricao?: string | null };
 }

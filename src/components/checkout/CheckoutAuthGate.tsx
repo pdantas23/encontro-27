@@ -5,6 +5,13 @@ import { createClient } from "@/lib/supabase/client";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
+/** Dados da conta usados no pedido: nome e WhatsApp foram coletados no cadastro (user_metadata). */
+export interface PerfilComprador {
+  email: string;
+  nome: string | null;
+  whatsapp: string | null;
+}
+
 /**
  * Portão de conta do checkout.
  *
@@ -17,8 +24,8 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
  * e-mail+senha usado em qualquer outro lugar), com volta automática pra esta
  * mesma URL de checkout via ?redirect=.
  */
-export function CheckoutAuthGate({ children }: { children: (email: string) => React.ReactNode }) {
-  const [email, setEmail] = useState<string | null | undefined>(undefined);
+export function CheckoutAuthGate({ children }: { children: (perfil: PerfilComprador) => React.ReactNode }) {
+  const [perfil, setPerfil] = useState<PerfilComprador | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -42,7 +49,11 @@ export function CheckoutAuthGate({ children }: { children: (email: string) => Re
         return;
       }
 
-      setEmail(user.email);
+      setPerfil({
+        email: user.email,
+        nome: (user.user_metadata?.nome as string | undefined)?.trim() || null,
+        whatsapp: (user.user_metadata?.whatsapp as string | undefined)?.trim() || null,
+      });
     }
 
     load();
@@ -51,6 +62,6 @@ export function CheckoutAuthGate({ children }: { children: (email: string) => Re
     };
   }, []);
 
-  if (!email) return <p className="text-marrom-suave">Carregando…</p>;
-  return <>{children(email)}</>;
+  if (!perfil) return <p className="text-marrom-suave">Carregando…</p>;
+  return <>{children(perfil)}</>;
 }

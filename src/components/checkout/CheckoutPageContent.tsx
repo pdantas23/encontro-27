@@ -8,10 +8,48 @@ import { CheckoutWizard } from "./CheckoutWizard";
 import { CheckoutAuthGate } from "./CheckoutAuthGate";
 import type { LoteComModalidade } from "@/types/checkout";
 
+function lotePodeSerComprado(lote: Pick<LoteComModalidade, "status" | "preco" | "quantidade" | "quantidade_vendida">) {
+  if (lote.status !== "ativo" || lote.preco == null) return false;
+  return lote.quantidade == null || lote.quantidade - lote.quantidade_vendida > 0;
+}
+
+/** Lote ativo do VIP, se ainda dá pra comprar; senão não há upgrade a oferecer. */
+async function carregarUpgradeVip(): Promise<LoteComModalidade | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("lotes_encontro27")
+    .select(
+      "id, nome, preco, quantidade, quantidade_vendida, status, hypercash_checkout_url, modalidades_encontro27!inner(slug, nome, descricao)",
+    )
+    .eq("modalidades_encontro27.slug", "vip")
+    .eq("status", "ativo")
+    .order("ordem", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) return null;
+
+  const modalidade = data.modalidades_encontro27 as unknown as LoteComModalidade["modalidade"] | null;
+  if (!modalidade) return null;
+
+  const vip: LoteComModalidade = {
+    id: data.id,
+    nome: data.nome,
+    preco: data.preco,
+    quantidade: data.quantidade,
+    quantidade_vendida: data.quantidade_vendida,
+    status: data.status,
+    hypercash_checkout_url: data.hypercash_checkout_url,
+    modalidade,
+  };
+  return lotePodeSerComprado(vip) ? vip : null;
+}
+
 export function CheckoutPageContent() {
   const searchParams = useSearchParams();
   const loteId = searchParams.get("lote");
   const [lote, setLote] = useState<LoteComModalidade | null | undefined>(undefined);
+  const [upgrade, setUpgrade] = useState<LoteComModalidade | null>(null);
 
   useEffect(() => {
     if (!loteId) return;
@@ -22,7 +60,7 @@ export function CheckoutPageContent() {
       const { data } = await supabase
         .from("lotes_encontro27")
         .select(
-          "id, nome, preco, quantidade, quantidade_vendida, status, hypercash_checkout_url, modalidades_encontro27(slug, nome)",
+          "id, nome, preco, quantidade, quantidade_vendida, status, hypercash_checkout_url, modalidades_encontro27(slug, nome, descricao)",
         )
         .eq("id", id)
         .maybeSingle();
@@ -32,11 +70,14 @@ export function CheckoutPageContent() {
         return;
       }
 
-      const modalidade = data.modalidades_encontro27 as unknown as { slug: string; nome: string } | null;
+      const modalidade = data.modalidades_encontro27 as unknown as LoteComModalidade["modalidade"] | null;
       if (!modalidade) {
         setLote(null);
         return;
       }
+
+      // Quem compra o Start pode fazer upgrade pro VIP.
+      setUpgrade(modalidade.slug === "start" ? await carregarUpgradeVip() : null);
 
       setLote({
         id: data.id,
@@ -55,7 +96,7 @@ export function CheckoutPageContent() {
 
   const naoEncontrado = (
     <div className="max-w-2xl">
-      <h2 className="font-display text-2xl text-heading">Ingresso não encontrado</h2>
+      <h1 className="font-display text-2xl text-heading">Ingresso não encontrado</h1>
       <Link
         href="/ingressos"
         className="mt-4 inline-flex min-h-11 items-center text-vinho underline underline-offset-4 decoration-ambar hover:decoration-ambar-escuro"
@@ -84,5 +125,7 @@ export function CheckoutPageContent() {
 
   // Só entra no wizard com sessão: o pedido nasce colado ao e-mail da conta,
   // que é o que a área do usuário usa para mostrar ingresso e QR Code.
-  return <CheckoutAuthGate>{(email) => <CheckoutWizard lote={lote} userEmail={email} />}</CheckoutAuthGate>;
+  return (
+    <CheckoutAuthGate>{(perfil) => <CheckoutWizard lote={lote} upgrade={upgrade} perfil={perfil} />}</CheckoutAuthGate>
+  );
 }

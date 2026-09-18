@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 import { assetPath } from "@/lib/utils";
 
 interface PageHeaderProps {
-  title: string;
+  /** Sem título, o cabeçalho é só a barra com a marca. */
+  title?: string;
   /** Uma frase de apoio, quando o título não basta. */
   description?: ReactNode;
 }
@@ -31,17 +32,19 @@ export function PageHeader({ title, description }: PageHeaderProps) {
         </Link>
       </div>
 
-      <div className="container-site pb-10 sm:pb-12">
-        <h1 className="font-display text-heading text-3xl sm:text-4xl lg:text-[2.75rem] leading-[1.1] text-balance">
-          {title}
-        </h1>
-        <span aria-hidden="true" className="filete mt-5" />
-        {description ? (
-          <p className="mt-6 max-w-2xl text-[17px] leading-7 sm:text-lg sm:leading-relaxed text-marrom text-pretty">
-            {description}
-          </p>
-        ) : null}
-      </div>
+      {title ? (
+        <div className="container-site pb-10 sm:pb-12">
+          <h1 className="font-display text-heading text-3xl sm:text-4xl lg:text-[2.75rem] leading-[1.1] text-balance">
+            {title}
+          </h1>
+          <span aria-hidden="true" className="filete mt-5" />
+          {description ? (
+            <p className="mt-6 max-w-2xl text-[17px] leading-7 sm:text-lg sm:leading-relaxed text-marrom text-pretty">
+              {description}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </header>
   );
 }
