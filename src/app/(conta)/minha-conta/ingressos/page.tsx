@@ -14,6 +14,10 @@ export default function MeusIngressosPage() {
 
   if (carregandoPedidos || carregandoIngressos) return null;
 
+  // Ingresso só existe depois do pagamento aprovado: pedido aguardando pagamento
+  // (ou recusado/cancelado/reembolsado) não é ingresso e não aparece aqui.
+  const ingressosAprovados = (ingressos ?? []).filter((ingresso) => ingresso.status_pagamento === "aprovado");
+
   return (
     <main id="conteudo" className="container-site py-10 sm:py-14">
       <div className="mx-auto max-w-xl text-center">
@@ -23,11 +27,11 @@ export default function MeusIngressosPage() {
 
         <TransferenciasRecebidas onRespondida={refetch} />
 
-        {!ingressos || ingressos.length === 0 ? (
+        {ingressosAprovados.length === 0 ? (
           <p className="mt-6 text-[17px] leading-7 text-marrom">Nenhum ingresso ainda.</p>
         ) : (
           <ul className="mt-6 flex flex-col gap-5">
-            {ingressos.map((ingresso) => (
+            {ingressosAprovados.map((ingresso) => (
               <li
                 key={ingresso.identificador_unico}
                 className="rounded-card border border-border bg-areia px-5 py-5 text-left"
@@ -48,34 +52,28 @@ export default function MeusIngressosPage() {
                   </div>
                 </dl>
 
-                {ingresso.status_pagamento === "aprovado" ? (
-                  <div className="mt-6 flex flex-col items-center">
-                    <div className="rounded-card bg-papel p-4">
-                      <QRCodeSVG value={ingresso.identificador_unico} size={160} />
-                    </div>
-                    <code className="mt-3 text-sm tracking-wide text-marrom-suave">
-                      {ingresso.identificador_unico}
-                    </code>
-
-                    {ingresso.check_in_status ? (
-                      <p className="mt-5 text-center text-[13px] leading-5 text-marrom-suave">
-                        Check-in já feito. A transferência de titularidade não está mais disponível.
-                      </p>
-                    ) : ingresso.transferencia_pendente ? (
-                      <TransferenciaPendenteIndicador
-                        transferenciaId={ingresso.transferencia_pendente.id}
-                        paraEmail={ingresso.transferencia_pendente.para_email}
-                        onCancelada={refetch}
-                      />
-                    ) : (
-                      <TransferirTitularidade identificadorUnico={ingresso.identificador_unico} onTransferido={refetch} />
-                    )}
+                <div className="mt-6 flex flex-col items-center">
+                  <div className="rounded-card bg-papel p-4">
+                    <QRCodeSVG value={ingresso.identificador_unico} size={160} />
                   </div>
-                ) : (
-                  <p className="mt-5 text-center text-[15px] leading-6 text-marrom-suave">
-                    O ingresso é liberado assim que o pagamento for aprovado.
-                  </p>
-                )}
+                  <code className="mt-3 text-sm tracking-wide text-marrom-suave">
+                    {ingresso.identificador_unico}
+                  </code>
+
+                  {ingresso.check_in_status ? (
+                    <p className="mt-5 text-center text-[13px] leading-5 text-marrom-suave">
+                      Check-in já feito. A transferência de titularidade não está mais disponível.
+                    </p>
+                  ) : ingresso.transferencia_pendente ? (
+                    <TransferenciaPendenteIndicador
+                      transferenciaId={ingresso.transferencia_pendente.id}
+                      paraEmail={ingresso.transferencia_pendente.para_email}
+                      onCancelada={refetch}
+                    />
+                  ) : (
+                    <TransferirTitularidade identificadorUnico={ingresso.identificador_unico} onTransferido={refetch} />
+                  )}
+                </div>
               </li>
             ))}
           </ul>

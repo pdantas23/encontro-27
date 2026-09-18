@@ -8,12 +8,15 @@ export default function MinhasComprasPage() {
 
   if (loading) return null;
 
+  // Pedido aguardando pagamento ainda não é uma compra: só aparece depois de resolvido.
+  const compras = (pedidos ?? []).filter((pedido) => pedido.status_pagamento !== "aguardando_pagamento");
+
   return (
     <main id="conteudo" className="container-site py-10 sm:py-14">
       <div className="mx-auto max-w-3xl text-center">
         <h1 className="font-display text-2xl text-heading">Minhas compras</h1>
 
-        {!pedidos || pedidos.length === 0 ? (
+        {compras.length === 0 ? (
           <p className="mt-6 text-[17px] leading-7 text-marrom">Nenhuma compra ainda.</p>
         ) : (
           <div className="mt-6 overflow-x-auto">
@@ -32,7 +35,7 @@ export default function MinhasComprasPage() {
                 </tr>
               </thead>
               <tbody>
-                {pedidos.map((pedido) => (
+                {compras.map((pedido) => (
                   <tr key={pedido.id}>
                     <td className="whitespace-nowrap border-b border-border px-3 py-3 text-marrom">
                       {new Date(pedido.created_at).toLocaleDateString("pt-BR")}

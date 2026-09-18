@@ -4,29 +4,16 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { TransferenciaPendenteRecebida } from "@/types/checkout";
 
-// ⚠️ TEMPORÁRIO — mesmo preview local do useMeusPedidos (ver o aviso lá).
-// Some junto quando o bypass for removido.
-const PREVIEW_FAKE = true;
-const RECEBIDA_FAKE: TransferenciaPendenteRecebida = {
-  id: "22222222-3333-4444-5555-666666666666",
-  de_nome: "João Pereira",
-  de_email: "joao@example.com",
-  modalidade_nome: "Start",
-  created_at: new Date().toISOString(),
-};
-
 interface Props {
   onRespondida: () => void;
 }
 
 export function TransferenciasRecebidas({ onRespondida }: Props) {
-  const [recebidas, setRecebidas] = useState<TransferenciaPendenteRecebida[]>(PREVIEW_FAKE ? [RECEBIDA_FAKE] : []);
+  const [recebidas, setRecebidas] = useState<TransferenciaPendenteRecebida[]>([]);
   const [respondendoId, setRespondendoId] = useState<string | null>(null);
   const [erroId, setErroId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (PREVIEW_FAKE) return;
-
     let ativo = true;
 
     async function carregar() {
