@@ -23,11 +23,33 @@ interface RelatorioData {
   totalCheckins: number;
 }
 
+// ⚠️ TEMPORÁRIO — ver aviso em src/hooks/useAdminAuth.ts / PENDENCIAS-PREVIEW.md.
+const PREVIEW_FAKE = true;
+const RELATORIO_FAKE: RelatorioData = {
+  porStatus: {
+    aguardando_pagamento: 9,
+    aprovado: 30,
+    recusado: 3,
+    cancelado: 0,
+    reembolsado: 0,
+  },
+  receitaAprovada: 26700,
+  vendasPorModalidade: [
+    { modalidade: "Start", quantidade: 14, receita: 5460 },
+    { modalidade: "Almoço Não Participante", quantidade: 6, receita: 1140 },
+    { modalidade: "Jantar de Conexões", quantidade: 5, receita: 2250 },
+    { modalidade: "VIP", quantidade: 5, receita: 4450 },
+  ],
+  totalParticipantesAprovados: 30,
+  totalCheckins: 11,
+};
+
 export default function AdminRelatoriosPage() {
   const { user, loading: authLoading } = useAdminAuth();
-  const [data, setData] = useState<RelatorioData | null>(null);
+  const [data, setData] = useState<RelatorioData | null>(PREVIEW_FAKE ? RELATORIO_FAKE : null);
 
   useEffect(() => {
+    if (PREVIEW_FAKE) return;
     if (!user) return;
 
     async function load() {

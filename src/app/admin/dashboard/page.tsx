@@ -7,19 +7,32 @@ import { createClient } from "@/lib/supabase/client";
 import { formatCurrencyBRL } from "@/lib/utils";
 
 interface DashboardData {
-  totalPedidos: number;
   aguardando: number;
   aprovados: number;
-  recusados: number;
   receitaAprovada: number;
   vendasPorModalidade: { modalidade: string; quantidade: number }[];
 }
 
+// ⚠️ TEMPORÁRIO — ver aviso em src/hooks/useAdminAuth.ts / PENDENCIAS-PREVIEW.md.
+const PREVIEW_FAKE = true;
+const DATA_FAKE: DashboardData = {
+  aguardando: 9,
+  aprovados: 30,
+  receitaAprovada: 26700,
+  vendasPorModalidade: [
+    { modalidade: "Start", quantidade: 14 },
+    { modalidade: "Almoço Não Participante", quantidade: 6 },
+    { modalidade: "Jantar de Conexões", quantidade: 5 },
+    { modalidade: "VIP", quantidade: 5 },
+  ],
+};
+
 export default function AdminDashboardPage() {
   const { user, loading: authLoading } = useAdminAuth();
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<DashboardData | null>(PREVIEW_FAKE ? DATA_FAKE : null);
 
   useEffect(() => {
+    if (PREVIEW_FAKE) return;
     if (!user) return;
 
     async function load() {
@@ -31,7 +44,6 @@ export default function AdminDashboardPage() {
       const rows = pedidos ?? [];
       const aguardando = rows.filter((p) => p.status_pagamento === "aguardando_pagamento").length;
       const aprovados = rows.filter((p) => p.status_pagamento === "aprovado").length;
-      const recusados = rows.filter((p) => p.status_pagamento === "recusado").length;
       const receitaAprovada = rows
         .filter((p) => p.status_pagamento === "aprovado")
         .reduce((sum, p) => sum + Number(p.valor_total ?? 0), 0);
@@ -46,10 +58,8 @@ export default function AdminDashboardPage() {
       }
 
       setData({
-        totalPedidos: rows.length,
         aguardando,
         aprovados,
-        recusados,
         receitaAprovada,
         vendasPorModalidade: Array.from(vendasPorModalidadeMap.entries()).map(([modalidade, quantidade]) => ({
           modalidade,
@@ -65,21 +75,19 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminLayout user={user}>
-      <p className="eyebrow text-ambar-texto">Visão geral</p>
+      <p className="text-xs font-semibold tracking-[0.14em] text-ambar-texto uppercase">Visão geral</p>
       <h1>Dashboard</h1>
       {!data ? (
-        <ul aria-hidden="true" className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5 animate-pulse">
-          {Array.from({ length: 5 }, (_, i) => (
-            <li key={i} className="h-24 rounded-card bg-areia" />
+        <ul aria-hidden="true" className="mt-6 grid gap-4 sm:grid-cols-3 animate-pulse">
+          {Array.from({ length: 3 }, (_, i) => (
+            <li key={i} className="h-28 rounded-card bg-areia" />
           ))}
         </ul>
       ) : (
         <>
-          <ul className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <Stat label="Pedidos" value={data.totalPedidos} />
-            <Stat label="Aguardando pagamento" value={data.aguardando} tone="pendente" />
+          <ul className="mt-6 grid gap-4 sm:grid-cols-3">
             <Stat label="Aprovados" value={data.aprovados} tone="ok" />
-            <Stat label="Recusados" value={data.recusados} tone="erro" />
+            <Stat label="Aguardando pagamento" value={data.aguardando} tone="pendente" />
             <Stat label="Receita aprovada" value={formatCurrencyBRL(data.receitaAprovada)} />
           </ul>
 
@@ -90,15 +98,15 @@ export default function AdminDashboardPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Modalidade</th>
-                  <th>Quantidade aprovada</th>
+                  <th style={thStyle}>Modalidade</th>
+                  <th style={thStyle}>Quantidade aprovada</th>
                 </tr>
               </thead>
               <tbody>
                 {data.vendasPorModalidade.map((row) => (
                   <tr key={row.modalidade}>
-                    <td>{row.modalidade}</td>
-                    <td>{row.quantidade}</td>
+                    <td style={tdStyle}>{row.modalidade}</td>
+                    <td style={tdNumeroStyle}>{row.quantidade}</td>
                   </tr>
                 ))}
               </tbody>
@@ -117,11 +125,24 @@ const TONES = {
   erro: "text-vermelho",
 } as const;
 
+// Rótulo (texto) e valor (número) de cada estatística usam fontes diferentes
+// e consistentes entre si: eyebrow (sans, caixa alta) pro texto, sans em
+// negrito com tabular-nums pro número — nunca misturados. min-h no rótulo
+// garante que ele ocupe sempre a mesma altura (mesmo quando quebra linha),
+// pra os números ficarem alinhados entre os cards, não só dentro de cada um.
 function Stat({ label, value, tone = "neutro" }: { label: string; value: string | number; tone?: keyof typeof TONES }) {
   return (
-    <li className="rounded-card border border-border bg-papel p-5 shadow-card">
-      <p className="eyebrow text-[0.65rem] text-marrom-suave">{label}</p>
-      <p className={`mt-2 font-display text-3xl leading-none ${TONES[tone]}`}>{value}</p>
+    <li className="min-w-0 overflow-hidden rounded-card border border-border bg-papel p-5 shadow-card">
+      <p className="min-h-9 text-[0.65rem] font-semibold tracking-[0.14em] text-marrom-suave uppercase">{label}</p>
+      <p className={`mt-1 truncate text-3xl leading-none font-bold tabular-nums ${TONES[tone]}`}>{value}</p>
     </li>
   );
 }
+
+const thStyle: React.CSSProperties = { textAlign: "center" };
+const tdStyle: React.CSSProperties = { textAlign: "center" };
+const tdNumeroStyle: React.CSSProperties = {
+  textAlign: "center",
+  fontWeight: 700,
+  fontVariantNumeric: "tabular-nums",
+};

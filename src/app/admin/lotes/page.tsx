@@ -73,16 +73,68 @@ function toFormState(lote: LoteRow): FormState {
   };
 }
 
+// ⚠️ TEMPORÁRIO — ver aviso em src/hooks/useAdminAuth.ts / PENDENCIAS-PREVIEW.md.
+const PREVIEW_FAKE = true;
+function modalidadeFake(overrides: Partial<ModalidadeRow>): ModalidadeRow {
+  return {
+    id: crypto.randomUUID(),
+    slug: "start",
+    nome: "Start",
+    descricao: null,
+    para_quem_e: null,
+    itens_incluidos: null,
+    itens_nao_incluidos: null,
+    condicoes: null,
+    ordem: 1,
+    ativo: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
+const MODALIDADES_FAKE: ModalidadeRow[] = [
+  modalidadeFake({ slug: "start", nome: "Start", ordem: 1 }),
+  modalidadeFake({ slug: "almoco-nao-participante", nome: "Almoço Não Participante", ordem: 2 }),
+  modalidadeFake({ slug: "jantar-conexoes", nome: "Jantar de Conexões", ordem: 3 }),
+  modalidadeFake({ slug: "vip", nome: "VIP", ordem: 4 }),
+];
+function loteFake(modalidade: ModalidadeRow, overrides: Partial<LoteComModalidade>): LoteComModalidade {
+  return {
+    id: crypto.randomUUID(),
+    modalidade_id: modalidade.id,
+    nome: "Lote 1",
+    preco: 390,
+    quantidade: 100,
+    quantidade_vendida: 14,
+    inicio_venda: null,
+    fim_venda: null,
+    status: "ativo",
+    hypercash_checkout_url: "https://pay.hypercash.com.br/pt/checkout/exemplo",
+    ordem: 1,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    modalidades_encontro27: { nome: modalidade.nome },
+    ...overrides,
+  };
+}
+const LOTES_FAKE: LoteComModalidade[] = [
+  loteFake(MODALIDADES_FAKE[0], { preco: 390, quantidade_vendida: 14 }),
+  loteFake(MODALIDADES_FAKE[1], { preco: 190, quantidade_vendida: 6 }),
+  loteFake(MODALIDADES_FAKE[2], { preco: 450, quantidade_vendida: 5 }),
+  loteFake(MODALIDADES_FAKE[3], { preco: 890, quantidade: 30, quantidade_vendida: 5 }),
+];
+
 export default function AdminLotesPage() {
   const { user, loading: authLoading } = useAdminAuth();
-  const [lotes, setLotes] = useState<LoteComModalidade[] | null>(null);
-  const [modalidades, setModalidades] = useState<ModalidadeRow[] | null>(null);
+  const [lotes, setLotes] = useState<LoteComModalidade[] | null>(PREVIEW_FAKE ? LOTES_FAKE : null);
+  const [modalidades, setModalidades] = useState<ModalidadeRow[] | null>(PREVIEW_FAKE ? MODALIDADES_FAKE : null);
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    if (PREVIEW_FAKE) return;
     if (!user) return;
 
     async function load() {

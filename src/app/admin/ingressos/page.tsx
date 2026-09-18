@@ -46,9 +46,35 @@ function toFormState(modalidade: ModalidadeRow): FormState {
   };
 }
 
+// ⚠️ TEMPORÁRIO — ver aviso em src/hooks/useAdminAuth.ts / PENDENCIAS-PREVIEW.md.
+const PREVIEW_FAKE = true;
+function modalidadeFake(overrides: Partial<ModalidadeRow>): ModalidadeRow {
+  return {
+    id: crypto.randomUUID(),
+    slug: "start",
+    nome: "Start",
+    descricao: null,
+    para_quem_e: null,
+    itens_incluidos: null,
+    itens_nao_incluidos: null,
+    condicoes: null,
+    ordem: 1,
+    ativo: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
+const MODALIDADES_FAKE: ModalidadeRow[] = [
+  modalidadeFake({ slug: "start", nome: "Start", ordem: 1 }),
+  modalidadeFake({ slug: "almoco-nao-participante", nome: "Almoço Não Participante", ordem: 2 }),
+  modalidadeFake({ slug: "jantar-conexoes", nome: "Jantar de Conexões", ordem: 3 }),
+  modalidadeFake({ slug: "vip", nome: "VIP", ordem: 4 }),
+];
+
 export default function AdminIngressosPage() {
   const { user, loading: authLoading } = useAdminAuth();
-  const [modalidades, setModalidades] = useState<ModalidadeRow[] | null>(null);
+  const [modalidades, setModalidades] = useState<ModalidadeRow[] | null>(PREVIEW_FAKE ? MODALIDADES_FAKE : null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
@@ -56,6 +82,7 @@ export default function AdminIngressosPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    if (PREVIEW_FAKE) return;
     if (!user) return;
 
     async function load() {

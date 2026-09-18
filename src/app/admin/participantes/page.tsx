@@ -18,12 +18,52 @@ type ParticipanteComPedido = ParticipanteRow & {
   } | null;
 };
 
+// ⚠️ TEMPORÁRIO — ver aviso em src/hooks/useAdminAuth.ts / PENDENCIAS-PREVIEW.md.
+const PREVIEW_FAKE = true;
+const PARTICIPANTES_FAKE: ParticipanteComPedido[] = [
+  {
+    id: "10000000-0000-0000-0000-000000000001",
+    pedido_id: "00000000-0000-0000-0000-000000000001",
+    nome: "Maria da Silva",
+    email: "maria@example.com",
+    identificador_unico: "11111111-2222-3333-4444-555555555555",
+    check_in_status: true,
+    check_in_em: new Date().toISOString(),
+    check_in_por: null,
+    created_at: new Date().toISOString(),
+    pedidos_encontro27: {
+      comprador_email: "maria@example.com",
+      status_pagamento: "aprovado",
+      lotes_encontro27: { modalidades_encontro27: { nome: "VIP" } },
+    },
+  },
+  {
+    id: "10000000-0000-0000-0000-000000000002",
+    pedido_id: "00000000-0000-0000-0000-000000000002",
+    nome: "João Pereira",
+    email: "joao@example.com",
+    identificador_unico: "22222222-3333-4444-5555-666666666666",
+    check_in_status: false,
+    check_in_em: null,
+    check_in_por: null,
+    created_at: new Date().toISOString(),
+    pedidos_encontro27: {
+      comprador_email: "joao@example.com",
+      status_pagamento: "aguardando_pagamento",
+      lotes_encontro27: { modalidades_encontro27: { nome: "Start" } },
+    },
+  },
+];
+
 export default function AdminParticipantesPage() {
   const { user, loading: authLoading } = useAdminAuth();
-  const [participantes, setParticipantes] = useState<ParticipanteComPedido[] | null>(null);
+  const [participantes, setParticipantes] = useState<ParticipanteComPedido[] | null>(
+    PREVIEW_FAKE ? PARTICIPANTES_FAKE : null,
+  );
   const [busca, setBusca] = useState("");
 
   useEffect(() => {
+    if (PREVIEW_FAKE) return;
     if (!user) return;
 
     async function load() {

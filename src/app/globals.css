@@ -124,17 +124,23 @@ body {
 
 /* Painel administrativo: as telas ainda usam markup simples (h1, h2, table,
    p). Estes estilos dão hierarquia e legibilidade sem reescrever cada tela. */
+/* Fonte de sistema em TODO o painel (menu lateral e conteúdo), títulos
+   inclusive — não a Quicksand nem a Oranienbaum (display) do site público:
+   ferramenta interna de dados pede uma leitura neutra/profissional. */
+.admin-shell {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
 .admin-content {
   color: var(--color-marrom);
   & h1 {
-    font-family: var(--font-display);
     font-size: 1.875rem;
     line-height: 1.15;
+    font-weight: 700;
     color: var(--color-vinho);
   }
   & h2 {
-    font-family: var(--font-display);
     font-size: 1.375rem;
+    font-weight: 700;
     color: var(--color-vinho);
     margin-top: 2rem;
   }

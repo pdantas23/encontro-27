@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useId, useState } from "react";
 import { usePathname } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { cn, assetPath } from "@/lib/utils";
-import { PainelFooter } from "@/components/layout/PainelFooter";
 import { PageTransition } from "@/components/layout/PageTransition";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -57,26 +57,30 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
   );
 
   const userBox = (
-    <div className="border-t border-border pt-4">
-      <p className="truncate text-xs font-semibold text-vinho" title={user.email}>
+    <div className="flex items-center gap-2 border-t border-border pt-4">
+      <p className="min-w-0 flex-1 truncate text-xs font-semibold text-vinho" title={user.email}>
         {user.email}
       </p>
-      <p className="eyebrow mt-0.5 text-[0.65rem] text-marrom-suave">{user.role}</p>
       <button
         type="button"
         onClick={handleLogout}
-        className="mt-3 inline-flex min-h-10 cursor-pointer items-center rounded-pill border border-dourado px-4 text-sm font-semibold text-vinho hover:bg-areia"
+        aria-label="Sair"
+        title="Sair"
+        className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-marrom-suave transition-colors hover:bg-areia hover:text-vinho"
       >
-        Sair
+        <LogOut className="size-4" strokeWidth={1.75} />
       </button>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-papel lg:grid lg:grid-cols-[240px_1fr]">
+    <div className="admin-shell min-h-screen bg-papel lg:grid lg:grid-cols-[240px_1fr]">
       {/* Barra superior (mobile) */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-papel/95 px-4 backdrop-blur lg:hidden">
-        <Brand />
+      <header className="sticky top-0 z-30 grid h-14 grid-cols-[2.75rem_1fr_2.75rem] items-center border-b border-border bg-papel/95 px-4 backdrop-blur lg:hidden">
+        <span aria-hidden="true" />
+        <div className="flex justify-center">
+          <Brand />
+        </div>
         <button
           type="button"
           className="inline-flex h-11 w-11 items-center justify-center rounded-pill text-vinho hover:bg-areia"
@@ -97,29 +101,24 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
 
       {/* Sidebar (desktop) */}
       <aside className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:flex-col lg:border-r lg:border-border lg:bg-areia/30 lg:p-5">
-        <div className="mb-6">
+        <div className="mb-6 flex justify-center">
           <Brand />
         </div>
         <div className="flex-1">{nav}</div>
         {userBox}
       </aside>
 
-      <div className="flex min-w-0 flex-col">
-        <main className="admin-content flex-1 px-4 py-6 sm:px-8 sm:py-8">
-          <PageTransition>{children}</PageTransition>
-        </main>
-        <PainelFooter />
-      </div>
+      <main className="admin-content min-w-0 px-4 py-6 sm:px-8 sm:py-8">
+        <PageTransition>{children}</PageTransition>
+      </main>
     </div>
   );
 }
 
 function Brand() {
   return (
-    <Link href="/admin/dashboard" className="inline-flex min-h-11 items-center gap-2">
-      <Image src={assetPath("/brand/flor-ouro-sm.webp")} alt="" width={40} height={38} className="size-7" />
-      <span className="font-display text-lg leading-none text-vinho">O Encontro</span>
-      <span className="eyebrow text-[0.6rem] text-ambar-texto">Admin</span>
+    <Link href="/admin/dashboard" aria-label="O Encontro, painel administrativo" className="inline-flex min-h-11 items-center">
+      <Image src={assetPath("/brand/flor-ouro-sm.webp")} alt="" width={64} height={64} className="size-9" />
     </Link>
   );
 }

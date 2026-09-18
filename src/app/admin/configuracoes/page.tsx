@@ -50,14 +50,31 @@ function toFormState(config: EventConfigRow): FormState {
   };
 }
 
+// ⚠️ TEMPORÁRIO — ver aviso em src/hooks/useAdminAuth.ts / PENDENCIAS-PREVIEW.md.
+const PREVIEW_FAKE = true;
+const CONFIG_ID_FAKE = "00000000-0000-0000-0000-000000000099";
+const FORM_FAKE: FormState = {
+  name: "O Encontro 2027",
+  date: "",
+  location: "",
+  description: "Edição comemorativa de 5 anos.",
+  saleStatus: "open",
+  whatsappSupport: "",
+  ga4Id: "",
+  gtmId: "",
+  metaPixelId: "",
+  googleAdsId: "",
+};
+
 export default function AdminConfiguracoesPage() {
   const { user, loading: authLoading } = useAdminAuth();
-  const [configId, setConfigId] = useState<string | null>(null);
-  const [form, setForm] = useState<FormState | null>(null);
+  const [configId, setConfigId] = useState<string | null>(PREVIEW_FAKE ? CONFIG_ID_FAKE : null);
+  const [form, setForm] = useState<FormState | null>(PREVIEW_FAKE ? FORM_FAKE : null);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   useEffect(() => {
+    if (PREVIEW_FAKE) return;
     if (!user) return;
 
     async function load() {
