@@ -2,7 +2,6 @@
 
 import { QRCodeSVG } from "qrcode.react";
 import { MinhaContaNav } from "@/components/layout/MinhaContaNav";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { useMeusPedidos } from "@/hooks/useMeusPedidos";
 
 export default function MeusIngressosPage() {
@@ -17,14 +16,15 @@ export default function MeusIngressosPage() {
   return (
     <>
       <MinhaContaNav />
-      <PageHeader title="Meus ingressos" />
 
       <main id="conteudo" className="container-site py-10 sm:py-14">
         <div className="max-w-2xl">
+          <h1 className="font-display text-2xl text-heading">Meus ingressos</h1>
+
           {ingressos.length === 0 ? (
-            <p className="text-[17px] leading-7 text-marrom">Nenhum ingresso ainda.</p>
+            <p className="mt-6 text-[17px] leading-7 text-marrom">Nenhum ingresso ainda.</p>
           ) : (
-            <ul className="flex flex-col gap-5">
+            <ul className="mt-6 flex flex-col gap-5">
               {ingressos.map(({ pedido, participante }) => (
                 <li
                   key={participante.identificador_unico}

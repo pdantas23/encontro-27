@@ -1,7 +1,6 @@
 "use client";
 
 import { MinhaContaNav } from "@/components/layout/MinhaContaNav";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { useMeusPedidos } from "@/hooks/useMeusPedidos";
 import { formatCurrencyBRL } from "@/lib/utils";
 
@@ -13,13 +12,14 @@ export default function MinhasComprasPage() {
   return (
     <>
       <MinhaContaNav />
-      <PageHeader title="Minhas compras" />
 
       <main id="conteudo" className="container-site py-10 sm:py-14">
+        <h1 className="font-display text-2xl text-heading">Minhas compras</h1>
+
         {!pedidos || pedidos.length === 0 ? (
-          <p className="text-[17px] leading-7 text-marrom">Nenhuma compra ainda.</p>
+          <p className="mt-6 text-[17px] leading-7 text-marrom">Nenhuma compra ainda.</p>
         ) : (
-          <div className="max-w-3xl overflow-x-auto">
+          <div className="mt-6 max-w-3xl overflow-x-auto">
             <table className="w-full border-separate border-spacing-0 text-[15px]">
               <thead>
                 <tr>
