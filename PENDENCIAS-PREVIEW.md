@@ -1,25 +1,14 @@
 # Pendências de preview (dados mock / rotas abertas)
 
-Enquanto a área do participante e a área administrativa estavam sendo
-desenhadas, algumas proteções e dados reais foram temporariamente trocados
-por mock, só para visualização. **Nada disso pode ir para produção assim.**
-Este arquivo é o checklist para reverter tudo antes do lançamento.
+A área administrativa está sendo desenhada com proteções e dados reais
+temporariamente trocados por mock, só para visualização. **Nada disso pode ir
+para produção assim.** Este arquivo é o checklist para reverter tudo antes do
+lançamento.
 
-## Área do participante (`/minha-conta`)
-
-Bypass ativo via uma constante `PREVIEW_FAKE = true` em três arquivos,
-todos com o mesmo comentário de aviso no topo:
-
-- [ ] `src/hooks/useMeusPedidos.ts` — pula a checagem de sessão e retorna um
-      pedido falso. Reverter para `PREVIEW_FAKE = false` restaura o redirect
-      para `/login` quando não há sessão (a lógica real já está pronta, só
-      está sendo pulada).
-- [ ] `src/hooks/useMeusIngressos.ts` — mesmo padrão, ingresso falso.
-- [ ] `src/components/conta/TransferenciasRecebidas.tsx` — mesmo padrão,
-      convite de transferência falso.
-
-Depois de reverter os três: `/minha-conta/**` volta a exigir login de
-verdade (a proteção já existe no código, só estava desativada).
+A **área do participante (`/minha-conta`) já está no formato final**: os
+bypasses `PREVIEW_FAKE` (`useMeusPedidos`, `useMeusIngressos`,
+`TransferenciasRecebidas`) foram removidos e a rota volta a exigir login de
+verdade.
 
 ## Área administrativa (`/admin`) — mocks e rota aberta
 
@@ -28,14 +17,13 @@ sem precisar logar como admin. Todos com a mesma constante `PREVIEW_FAKE = true`
 e o mesmo comentário de aviso no topo:
 
 - [ ] `src/hooks/useAdminAuth.ts` — pula a checagem de sessão/perfil e libera
-      `/admin/**` direto (a proteção real já está pronta, só está sendo pulada).
+      `/admin/**` direto (a proteção real já está pronta, inclusive a regra da
+      role `staff`, só está sendo pulada).
 - [ ] `src/app/admin/dashboard/page.tsx` — estatísticas e vendas por modalidade falsas.
 - [ ] `src/app/admin/pedidos/page.tsx` — 4 pedidos falsos (aprovado, aguardando pagamento, recusado e um com "lote sem vaga"), com os participantes de cada um.
-- [ ] `src/app/admin/participantes/page.tsx` — 2 participantes falsos.
-- [ ] `src/app/admin/ingressos/page.tsx` — as 4 modalidades reais, com dados falsos no resto dos campos.
-- [ ] `src/app/admin/lotes/page.tsx` — 1 lote falso por modalidade.
+- [ ] `src/app/admin/produtos/page.tsx` — 5 produtos falsos (um com 2 lotes, um esgotado, um oculto e sem lote).
 - [ ] `src/app/admin/relatorios/page.tsx` — números falsos.
-- [ ] `src/app/admin/configuracoes/page.tsx` — formulário pré-preenchido com dados falsos (não veio do banco).
+- [ ] `src/app/admin/equipe/page.tsx` — 4 pessoas falsas (comercial, marketing e 2 staff).
 - `src/app/admin/check-in/page.tsx` não tem dados mock (não busca nada ao carregar) — só se beneficia do bypass do `useAdminAuth`.
 
 Nestas páginas, ações que **gravam** no banco (Salvar, Editar, etc.) continuam
@@ -49,17 +37,16 @@ O painel nasceu com markup simples (h1, table, inline style). O acabamento
 está sendo feito aba por aba, com dados mock, no mesmo ritmo da área do
 participante.
 
-**Feitas:** Dashboard, Pedidos.
+**Feitas:** Dashboard, Pedidos, Produtos, Equipe.
 
 **Faltam ajustar** (ainda no visual "cru" original, só com o layout/fonte
 globais do painel aplicados):
 
-- [ ] Participantes (`/admin/participantes`)
-- [ ] Modalidades (`/admin/ingressos`)
-- [ ] Lotes (`/admin/lotes`)
 - [ ] Check-in (`/admin/check-in`)
 - [ ] Relatórios (`/admin/relatorios`)
-- [ ] Configurações (`/admin/configuracoes`)
+
+Abas removidas: Participantes e Configurações. Modalidades e Lotes viraram uma
+só, **Produtos** (`/admin/produtos`).
 
 ### Decisões já tomadas (aplicar nas abas restantes)
 
@@ -72,6 +59,26 @@ globais do painel aplicados):
 - **Sem rodapé** em nenhuma aba do admin. Menu lateral só com a logo (sem
   texto "O Encontro", sem selo "Admin"/role) e "Sair" só como ícone ao lado
   do e-mail.
+- **Menu:** cada aba tem um ícone (lucide) à esquerda; a ordem é Dashboard,
+  Pedidos, Produtos, Check-in, Relatórios, Equipe (Equipe sempre por último).
+- **Roles:** `comercial` e `marketing` veem tudo; `staff` (equipe de campo) só
+  vê o Check-in — o menu mostra só ele e qualquer outra rota leva a staff de
+  volta ao check-in. No banco, `is_admin_encontro27()` não inclui `staff`, então
+  a RLS também a mantém fora dos dados (migration 0011).
+- **Produtos:** uma linha por lote, com produto, lote, preço, vendidos e status
+  (sem colunas de período e de link). O lápis abre um modal só do **lote**, em
+  uma coluna, um campo por linha, sem exceção. O primeiro campo é um seletor de
+  lote (Lote 1, Lote 2...), não o nome: cada lote tem os próprios dados (preço,
+  quantidade, início e fim da venda, status, ordem, link da Hypercash) e trocar
+  o lote mostra os valores dele. A última opção do seletor é o próximo lote ("Lote
+  3 (novo)"): abre em branco, começa "Encerrado" (pra não entrar à venda sozinho
+  — o site vende o lote ativo) e só passa a existir ao salvar; é assim que se
+  cria lote, e o único jeito de dar o primeiro lote a um produto sem lote.
+  Cancelar/Salvar à direita. Os dados do produto (nome, descrição, itens...) são
+  fixos e não têm tela de edição. Não existe botão "Novo lote".
+- **Campos numéricos:** nada de setas de incremento — são campos de texto que só
+  aceitam o que faz sentido (preço com vírgula/ponto e até 2 casas, aceita o
+  formato da tabela "3.300,00"; quantidade e ordem só dígitos).
 - **Componentes próprios** em `src/components/ui/` (usar em vez de
   elementos nativos): `Dropdown` (no lugar de `<select>`), `Modal` (fundo só
   com blur, sem scroll interno, aceita `tituloExtra` e `rodape`),
@@ -97,6 +104,17 @@ globais do painel aplicados):
       de pagamento e não tem opção "Lote sem vaga". Decidir se vira opção.
 - [ ] **Busca por dados da Hypercash** (ex.: id da transação) ficou de fora
       da busca de Pedidos ("pode ser uma opção").
+- [ ] **Aba Configurações removida:** `event_config_encontro27` (WhatsApp de
+      suporte, IDs de GA4/GTM/Pixel/Ads, status das vendas) não tem mais tela —
+      só dá pra editar direto no banco, e o site (`SupportLink`, tracking) ainda
+      lê essa tabela.
+- [ ] **Equipe:** só cadastra `staff`. Não há remover pessoa, trocar role nem
+      redefinir senha na tela; `comercial`/`marketing` seguem sendo criados por
+      `scripts/seed-admin.mjs`.
+- [ ] **API `/equipe`** (`api/src/routes/equipe.ts`) precisa ser publicada
+      (push + redeploy no EasyPanel) pra o cadastro da equipe funcionar em
+      produção. A conta staff é criada com e-mail já confirmado e senha inicial
+      definida por quem cadastra.
 - [ ] `ConfirmModal` (confirmação da transferência, área do participante)
       ainda usa fundo colorido (`bg-marrom/40`); só o `Modal` do admin usa
       apenas blur.
@@ -123,6 +141,6 @@ já marcado como confirmado, e o navegador faz o login em seguida.
 ## Antes de lançar
 
 - [ ] Confirmar que nenhum `PREVIEW_FAKE` (ou equivalente) restou no código.
-- [ ] Testar login real de participante e de admin ponta a ponta.
+- [ ] Testar login real de admin ponta a ponta (o do participante já roda de verdade).
 - [ ] Fechar as decisões em aberto acima.
 - [ ] Apagar este arquivo quando tudo acima estiver revertido.

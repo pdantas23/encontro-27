@@ -18,7 +18,7 @@ const MOTIVO_MENSAGENS: Record<string, string> = {
 };
 
 export default function AdminCheckInPage() {
-  const { user, loading: authLoading } = useAdminAuth();
+  const { user, loading: authLoading } = useAdminAuth({ permitirStaff: true });
   const [identificador, setIdentificador] = useState("");
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<{ sucesso: boolean; mensagem: string } | null>(null);

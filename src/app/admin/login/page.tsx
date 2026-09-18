@@ -35,14 +35,15 @@ export default function AdminLoginPage() {
       .eq("uuid", data.user.id)
       .maybeSingle();
 
-    if (!profile || (profile.role !== "comercial" && profile.role !== "marketing")) {
+    if (!profile || (profile.role !== "comercial" && profile.role !== "marketing" && profile.role !== "staff")) {
       await supabase.auth.signOut();
       setError("Acesso não autorizado para este e-mail.");
       setLoading(false);
       return;
     }
 
-    window.location.replace(`${basePath}/admin/dashboard`);
+    // A equipe de campo (staff) só tem o check-in.
+    window.location.replace(`${basePath}/admin/${profile.role === "staff" ? "check-in" : "dashboard"}`);
   }
 
   return (

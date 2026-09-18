@@ -21,11 +21,12 @@ const ADMIN_FAKE: AdminUser = { userId: "00000000-0000-0000-0000-000000000000", 
 
 /**
  * Guarda de acesso para páginas de /admin. Sem sessão, ou sem um perfil
- * válido em profiles_encontro27 (role comercial|marketing), redireciona
- * para /admin/login. Usa window.location.replace (não router.replace)
- * porque o build é export estático — ver RCO-LP-BLUEPRINT.md.
+ * válido em profiles_encontro27, redireciona para /admin/login. A role
+ * 'staff' só entra nas páginas que pedem `permitirStaff` (hoje, o check-in);
+ * em qualquer outra é levada pro check-in. Usa window.location.replace (não
+ * router.replace) porque o build é export estático — ver RCO-LP-BLUEPRINT.md.
  */
-export function useAdminAuth() {
+export function useAdminAuth({ permitirStaff = false }: { permitirStaff?: boolean } = {}) {
   const [user, setUser] = useState<AdminUser | null>(PREVIEW_FAKE ? ADMIN_FAKE : null);
   const [loading, setLoading] = useState(!PREVIEW_FAKE);
 
@@ -53,8 +54,13 @@ export function useAdminAuth() {
 
       if (!active) return;
 
-      if (!profile || (profile.role !== "comercial" && profile.role !== "marketing")) {
+      if (!profile || (profile.role !== "comercial" && profile.role !== "marketing" && profile.role !== "staff")) {
         window.location.replace(`${basePath}/admin/login`);
+        return;
+      }
+
+      if (profile.role === "staff" && !permitirStaff) {
+        window.location.replace(`${basePath}/admin/check-in`);
         return;
       }
 
@@ -67,7 +73,7 @@ export function useAdminAuth() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [permitirStaff]);
 
   return { user, loading };
 }

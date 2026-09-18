@@ -12,7 +12,8 @@ export type StatusPagamento =
   | "cancelado"
   | "reembolsado";
 
-export type PerfilRole = "comercial" | "marketing";
+/** staff = equipe de campo: só acessa o check-in (ver migration 0011). */
+export type PerfilRole = "comercial" | "marketing" | "staff";
 
 export interface Database {
   public: {

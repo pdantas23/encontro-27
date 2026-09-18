@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useId, useState } from "react";
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { ChartColumn, LayoutDashboard, LogOut, Package, QrCode, ShoppingBag, Users, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { cn, assetPath } from "@/lib/utils";
@@ -12,15 +12,21 @@ import { PageTransition } from "@/components/layout/PageTransition";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-const NAV_ITEMS = [
-  { href: "/admin/dashboard", label: "Dashboard" },
-  { href: "/admin/pedidos", label: "Pedidos" },
-  { href: "/admin/participantes", label: "Participantes" },
-  { href: "/admin/ingressos", label: "Modalidades" },
-  { href: "/admin/lotes", label: "Lotes" },
-  { href: "/admin/check-in", label: "Check-in" },
-  { href: "/admin/relatorios", label: "Relatórios" },
-  { href: "/admin/configuracoes", label: "Configurações" },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  /** A role 'staff' (equipe de campo) só enxerga os itens marcados aqui. */
+  staff?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingBag },
+  { href: "/admin/produtos", label: "Produtos", icon: Package },
+  { href: "/admin/check-in", label: "Check-in", icon: QrCode, staff: true },
+  { href: "/admin/relatorios", label: "Relatórios", icon: ChartColumn },
+  { href: "/admin/equipe", label: "Equipe", icon: Users },
 ];
 
 export function AdminLayout({ user, children }: { user: AdminUser; children: React.ReactNode }) {
@@ -34,9 +40,13 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
     window.location.replace(`${basePath}/admin/login`);
   }
 
+  const staff = user.role === "staff";
+  const itens = staff ? NAV_ITEMS.filter((item) => item.staff) : NAV_ITEMS;
+  const inicio = staff ? "/admin/check-in" : "/admin/dashboard";
+
   const nav = (
     <nav aria-label="Painel" className="flex flex-col gap-1">
-      {NAV_ITEMS.map((item) => {
+      {itens.map((item) => {
         const active = pathname?.startsWith(item.href);
         return (
           <Link
@@ -45,10 +55,11 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
             aria-current={active ? "page" : undefined}
             onClick={() => setOpen(false)}
             className={cn(
-              "flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition-colors",
+              "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors",
               active ? "bg-areia text-vinho" : "text-marrom hover:bg-areia/60 hover:text-vinho",
             )}
           >
+            <item.icon aria-hidden="true" className="size-[18px] shrink-0" strokeWidth={1.75} />
             {item.label}
           </Link>
         );
@@ -79,7 +90,7 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
       <header className="sticky top-0 z-30 grid h-14 grid-cols-[2.75rem_1fr_2.75rem] items-center border-b border-border bg-papel/95 px-4 backdrop-blur lg:hidden">
         <span aria-hidden="true" />
         <div className="flex justify-center">
-          <Brand />
+          <Brand href={inicio} />
         </div>
         <button
           type="button"
@@ -102,7 +113,7 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
       {/* Sidebar (desktop) */}
       <aside className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:flex-col lg:border-r lg:border-border lg:bg-areia/30 lg:p-5">
         <div className="mb-6 flex justify-center">
-          <Brand />
+          <Brand href={inicio} />
         </div>
         <div className="flex-1">{nav}</div>
         {userBox}
@@ -115,9 +126,9 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
   );
 }
 
-function Brand() {
+function Brand({ href }: { href: string }) {
   return (
-    <Link href="/admin/dashboard" aria-label="O Encontro, painel administrativo" className="inline-flex min-h-11 items-center">
+    <Link href={href} aria-label="O Encontro, painel administrativo" className="inline-flex min-h-11 items-center">
       <Image src={assetPath("/brand/flor-ouro-sm.webp")} alt="" width={64} height={64} className="size-9" />
     </Link>
   );
