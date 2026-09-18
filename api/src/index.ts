@@ -24,8 +24,10 @@ if (allowedOrigins.length === 0) {
   )
 }
 
+// No Hono, "*" dentro de uma lista NÃO é coringa (só casa com origem idêntica),
+// então CORS_ALLOWED_ORIGINS=* precisa virar a string "*" pra valer.
 const corsMiddleware = cors({
-  origin: allowedOrigins,
+  origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
   allowMethods: ['GET', 'POST', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
 })
