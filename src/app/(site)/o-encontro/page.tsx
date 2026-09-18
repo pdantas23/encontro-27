@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/layout/PageHeader";
+
 /**
  * Página institucional "O Encontro". Texto estático — não existe tabela para
  * este conteúdo no banco. Baseado no que já está confirmado no levantamento
@@ -10,28 +12,33 @@
  */
 export default function OEncontroPage() {
   return (
-    <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-      <h1>O Encontro</h1>
+    <>
+      <PageHeader
+        title="O Encontro"
+        description="O Encontro 2027 é a edição comemorativa de 5 anos do evento. Essa celebração faz parte da identidade de toda a experiência — do conteúdo apresentado às interações ao vivo — e marca uma trajetória que reúne pessoas em torno de negócios e conexões."
+      />
 
-      <p>
-        O Encontro 2027 é a edição comemorativa de 5 anos do evento. Essa
-        celebração faz parte da identidade de toda a experiência — do
-        conteúdo apresentado às interações ao vivo — e marca uma trajetória
-        que reúne pessoas em torno de negócios e conexões.
-      </p>
+      <main id="conteudo" className="container-site py-10 sm:py-14">
+        <div className="max-w-3xl divide-y divide-border border-y border-border">
+          <section className="py-8">
+            <h2 className="rotulo-secao text-ambar-texto">Histórico</h2>
+            <span aria-hidden="true" className="filete mt-4" />
+            <p className="mt-6 max-w-2xl text-[17px] leading-7 text-marrom text-pretty">
+              Em breve. O histórico das edições anteriores (números, marcos e fotos) entra nesta página assim
+              que a organização disponibilizar o material.
+            </p>
+          </section>
 
-      <h2>Histórico</h2>
-      <p>
-        Em breve. O histórico das edições anteriores (números, marcos e
-        fotos) entra nesta página assim que a organização disponibilizar o
-        material.
-      </p>
-
-      <h2>Por que 5 anos</h2>
-      <p>
-        Em breve. Os detalhes sobre o significado da edição comemorativa
-        ainda estão em validação com a organização.
-      </p>
-    </main>
+          <section className="py-8">
+            <h2 className="rotulo-secao text-ambar-texto">Por que 5 anos</h2>
+            <span aria-hidden="true" className="filete mt-4" />
+            <p className="mt-6 max-w-2xl text-[17px] leading-7 text-marrom text-pretty">
+              Em breve. Os detalhes sobre o significado da edição comemorativa ainda estão em validação com a
+              organização.
+            </p>
+          </section>
+        </div>
+      </main>
+    </>
   );
 }

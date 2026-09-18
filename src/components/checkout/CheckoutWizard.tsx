@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CTAButton } from "@/components/ui/CTAButton";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -125,72 +126,129 @@ export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
   }
 
   return (
-    <div>
-      <h1>{lote.modalidade.nome}</h1>
-      <p>{lote.nome}</p>
-      <p>Etapa {step} de 2</p>
+    <div className="max-w-2xl">
+      <p className="rotulo-secao text-ambar-texto">Etapa {step} de 2</p>
+      <span aria-hidden="true" className="filete mt-4" />
+
+      <h1 className="font-display text-heading mt-5 text-3xl sm:text-4xl leading-[1.1]">{lote.modalidade.nome}</h1>
+      <p className="mt-2 text-marrom-suave">{lote.nome}</p>
 
       {/* Resumo sempre visível — preço e total nunca ficam só na última etapa */}
-      <div style={{ border: "1px solid #ddd", padding: 12, margin: "16px 0" }}>
-        <p>Valor: {formatCurrencyBRL(precoUnitario)}</p>
-        <p>Quantidade: 1 ingresso por pedido</p>
-        <p>Total: {formatCurrencyBRL(valorTotal)}</p>
-      </div>
+      <dl className="mt-8 rounded-card border border-border bg-areia px-5 py-4 text-[15px]">
+        <div className="flex justify-between gap-4 py-1">
+          <dt className="text-marrom">Valor</dt>
+          <dd className="text-marrom">{formatCurrencyBRL(precoUnitario)}</dd>
+        </div>
+        <div className="flex justify-between gap-4 py-1">
+          <dt className="text-marrom">Quantidade</dt>
+          <dd className="text-marrom">1 ingresso por pedido</dd>
+        </div>
+        <div className="mt-2 flex justify-between gap-4 border-t border-border pt-3">
+          <dt className="font-display text-lg text-vinho">Total</dt>
+          <dd className="font-display text-lg text-vinho">{formatCurrencyBRL(valorTotal)}</dd>
+        </div>
+      </dl>
 
       {step === 1 && (
-        <form onSubmit={handleSubmitComprador(handleComprador)}>
-          <h2>Seus dados</h2>
-          <p>O ingresso será emitido em seu nome.</p>
-          <label>
-            Nome completo
-            <input autoComplete="name" {...registerComprador("nome")} />
-          </label>
-          {compradorErrors.nome && <p style={{ color: "crimson" }}>{compradorErrors.nome.message}</p>}
-          <label>
-            E-mail
-            <input type="email" autoComplete="email" {...registerComprador("email")} />
-          </label>
-          {compradorErrors.email && <p style={{ color: "crimson" }}>{compradorErrors.email.message}</p>}
-          <label>
-            WhatsApp (com DDD)
-            <input inputMode="tel" autoComplete="tel" {...registerComprador("whatsapp")} />
-          </label>
-          {compradorErrors.whatsapp && <p style={{ color: "crimson" }}>{compradorErrors.whatsapp.message}</p>}
-          <p>
-            <button type="submit">Continuar</button>
-          </p>
+        <form onSubmit={handleSubmitComprador(handleComprador)} className="mt-10">
+          <h2 className="font-display text-2xl text-heading">Seus dados</h2>
+          <p className="mt-2 text-marrom">O ingresso será emitido em seu nome.</p>
+
+          <div className="mt-6 flex flex-col gap-4">
+            <div>
+              <label>
+                Nome completo
+                <input autoComplete="name" {...registerComprador("nome")} />
+              </label>
+              {compradorErrors.nome && <p className="mt-2 border-l-2 border-vermelho pl-3 text-sm text-marrom">{compradorErrors.nome.message}</p>}
+            </div>
+            <div>
+              <label>
+                E-mail
+                <input type="email" autoComplete="email" {...registerComprador("email")} />
+              </label>
+              {compradorErrors.email && <p className="mt-2 border-l-2 border-vermelho pl-3 text-sm text-marrom">{compradorErrors.email.message}</p>}
+            </div>
+            <div>
+              <label>
+                WhatsApp (com DDD)
+                <input inputMode="tel" autoComplete="tel" {...registerComprador("whatsapp")} />
+              </label>
+              {compradorErrors.whatsapp && <p className="mt-2 border-l-2 border-vermelho pl-3 text-sm text-marrom">{compradorErrors.whatsapp.message}</p>}
+            </div>
+          </div>
+
+          <CTAButton type="submit" size="lg" className="mt-8 w-full sm:w-auto">
+            Continuar
+          </CTAButton>
         </form>
       )}
 
       {step === 2 && comprador && (
-        <div>
-          <h2>Resumo e pagamento</h2>
-          <p>
-            Comprador: {comprador.nome} ({comprador.email})
-          </p>
-          <p>Participante: {comprador.nome}</p>
-          <p>Valor total: {formatCurrencyBRL(valorTotal)}</p>
-          <p>
+        <div className="mt-10">
+          <h2 className="font-display text-2xl text-heading">Resumo e pagamento</h2>
+
+          <dl className="mt-6 divide-y divide-border border-y border-border text-[15px]">
+            <div className="flex flex-wrap justify-between gap-2 py-3">
+              <dt className="text-marrom-suave">Comprador</dt>
+              <dd className="text-marrom">{comprador.nome} ({comprador.email})</dd>
+            </div>
+            <div className="flex flex-wrap justify-between gap-2 py-3">
+              <dt className="text-marrom-suave">Participante</dt>
+              <dd className="text-marrom">{comprador.nome}</dd>
+            </div>
+            <div className="flex flex-wrap justify-between gap-2 py-3">
+              <dt className="text-marrom-suave">Valor total</dt>
+              <dd className="font-display text-lg text-vinho">{formatCurrencyBRL(valorTotal)}</dd>
+            </div>
+          </dl>
+
+          <p className="mt-6 text-[17px] leading-7 text-marrom">
             Ao confirmar, você será direcionado para o pagamento seguro na Hypercash. O ingresso é liberado assim
             que o pagamento for aprovado.
           </p>
-          <label>
-            <input type="checkbox" checked={aceiteTermos} onChange={(event) => setAceiteTermos(event.target.checked)} />{" "}
-            Li e aceito os <Link href="/termos">termos de compra</Link>.
+
+          <label className="mt-6 flex items-start gap-3 font-normal text-marrom">
+            <input
+              type="checkbox"
+              checked={aceiteTermos}
+              onChange={(event) => setAceiteTermos(event.target.checked)}
+              className="mt-1 size-5 shrink-0 accent-[var(--color-ambar-escuro)]"
+            />
+            <span>
+              Li e aceito os{" "}
+              <Link href="/termos" className="text-vinho underline underline-offset-4 decoration-ambar">
+                termos de compra
+              </Link>
+              .
+            </span>
           </label>
+
           {erro && (
-            <p role="alert" style={{ color: "crimson" }}>
+            <p role="alert" className="mt-5 border-l-2 border-vermelho pl-4 text-marrom">
               {erro}
             </p>
           )}
-          <p>
-            <button type="button" onClick={() => setStep(1)} disabled={enviando || pedidoPendente !== null}>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row-reverse sm:justify-end">
+            <CTAButton
+              type="button"
+              size="lg"
+              onClick={handleConfirmar}
+              disabled={enviando || !aceiteTermos}
+            >
+              {enviando ? "Enviando…" : pedidoPendente ? "Tentar novamente" : "Confirmar e ir para pagamento"}
+            </CTAButton>
+            <CTAButton
+              type="button"
+              variant="secondary"
+              size="lg"
+              onClick={() => setStep(1)}
+              disabled={enviando || pedidoPendente !== null}
+            >
               Voltar
-            </button>{" "}
-            <button type="button" onClick={handleConfirmar} disabled={enviando || !aceiteTermos}>
-              {enviando ? "Enviando..." : pedidoPendente ? "Tentar novamente" : "Confirmar e ir para pagamento"}
-            </button>
-          </p>
+            </CTAButton>
+          </div>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { MinhaContaNav } from "@/components/layout/MinhaContaNav";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useMeusPedidos } from "@/hooks/useMeusPedidos";
 import { formatCurrencyBRL } from "@/lib/utils";
 
@@ -10,36 +11,48 @@ export default function MinhasComprasPage() {
   if (loading) return null;
 
   return (
-    <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
+    <>
       <MinhaContaNav />
-      <h1>Minhas compras</h1>
+      <PageHeader title="Minhas compras" />
 
-      {!pedidos || pedidos.length === 0 ? (
-        <p>Nenhuma compra ainda.</p>
-      ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: "left" }}>Data</th>
-              <th style={{ textAlign: "left" }}>Modalidade</th>
-              <th style={{ textAlign: "left" }}>Qtd.</th>
-              <th style={{ textAlign: "left" }}>Valor</th>
-              <th style={{ textAlign: "left" }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pedidos.map((pedido) => (
-              <tr key={pedido.id}>
-                <td>{new Date(pedido.created_at).toLocaleDateString("pt-BR")}</td>
-                <td>{pedido.modalidade_nome}</td>
-                <td>{pedido.quantidade}</td>
-                <td>{formatCurrencyBRL(pedido.valor_total)}</td>
-                <td>{pedido.status_pagamento}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </main>
+      <main id="conteudo" className="container-site py-10 sm:py-14">
+        {!pedidos || pedidos.length === 0 ? (
+          <p className="text-[17px] leading-7 text-marrom">Nenhuma compra ainda.</p>
+        ) : (
+          <div className="max-w-3xl overflow-x-auto">
+            <table className="w-full border-separate border-spacing-0 text-[15px]">
+              <thead>
+                <tr>
+                  {["Data", "Modalidade", "Qtd.", "Valor", "Status"].map((coluna) => (
+                    <th
+                      key={coluna}
+                      scope="col"
+                      className="eyebrow whitespace-nowrap border-b border-border bg-areia px-3 py-3 text-left text-[0.65rem] text-marrom-suave first:rounded-l-lg last:rounded-r-lg"
+                    >
+                      {coluna}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pedidos.map((pedido) => (
+                  <tr key={pedido.id}>
+                    <td className="whitespace-nowrap border-b border-border px-3 py-3 text-marrom">
+                      {new Date(pedido.created_at).toLocaleDateString("pt-BR")}
+                    </td>
+                    <td className="border-b border-border px-3 py-3 text-marrom">{pedido.modalidade_nome}</td>
+                    <td className="border-b border-border px-3 py-3 text-marrom">{pedido.quantidade}</td>
+                    <td className="whitespace-nowrap border-b border-border px-3 py-3 text-marrom">
+                      {formatCurrencyBRL(pedido.valor_total)}
+                    </td>
+                    <td className="border-b border-border px-3 py-3 text-marrom">{pedido.status_pagamento}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </main>
+    </>
   );
 }

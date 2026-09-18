@@ -37,12 +37,25 @@ export function HeroSection() {
           className="w-20 sm:w-[180px] h-auto"
         />
 
-        <h1 id="hero-titulo" className="font-display text-heading mt-4 sm:mt-6 text-4xl sm:text-6xl lg:text-7xl leading-none tracking-wide">
-          O Encontro{" "}
-          <span className="sr-only">2027</span>
-          {/* Grafia da marca para o ano (como no site de 2026: VINTEVINTESEIS) */}
-          <span aria-hidden="true" className="block font-sans text-ambar-texto text-xs sm:text-sm font-semibold tracking-[0.42em] mt-3 sm:mt-4">
-            VINTE<span className="font-normal">VINTE</span>SETE
+        {/* Assinatura da marca: wordmark oficial (não recriar em fonte de sistema). */}
+        <h1 id="hero-titulo" className="mt-4 sm:mt-6">
+          <span className="sr-only">O Encontro 2027</span>
+          <Image
+            src={assetPath("/brand/wordmark-ouro.webp")}
+            alt=""
+            width={900}
+            height={135}
+            priority
+            sizes="(min-width: 640px) 520px, 260px"
+            className="w-[260px] sm:w-[440px] lg:w-[520px] h-auto"
+          />
+          <span
+            aria-hidden="true"
+            className="mt-3 sm:mt-4 flex items-center justify-center gap-3 sm:gap-4 font-display text-dourado text-sm sm:text-base tracking-[0.42em] indent-[0.42em]"
+          >
+            <span className="h-px w-8 sm:w-12 bg-dourado-linha" />
+            2027
+            <span className="h-px w-8 sm:w-12 bg-dourado-linha" />
           </span>
         </h1>
 

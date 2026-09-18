@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import type { Database, Json } from "@/types/database";
 import { formatCurrencyBRL } from "@/lib/utils";
 import { trackSelectTicket } from "@/lib/tracking/events";
+import { CTAButton } from "@/components/ui/CTAButton";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type Modalidade = Database["public"]["Tables"]["modalidades_encontro27"]["Row"] & {
   lotes_encontro27: Database["public"]["Tables"]["lotes_encontro27"]["Row"][];
@@ -37,20 +39,25 @@ export function ModalidadeDetalhe({ slug }: { slug: string }) {
 
   if (modalidade === undefined) {
     return (
-      <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-        <p>Carregando...</p>
+      <main id="conteudo" className="container-site py-12 sm:py-16">
+        <p className="text-marrom-suave">Carregando…</p>
       </main>
     );
   }
 
   if (!modalidade) {
     return (
-      <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-        <h1>Modalidade não encontrada</h1>
-        <p>
-          <Link href="/ingressos">Voltar para ingressos</Link>
-        </p>
-      </main>
+      <>
+        <PageHeader title="Modalidade não encontrada" />
+        <main id="conteudo" className="container-site py-10 sm:py-14">
+          <Link
+            href="/ingressos"
+            className="inline-flex min-h-11 items-center text-vinho underline underline-offset-4 decoration-ambar hover:decoration-ambar-escuro"
+          >
+            Voltar para ingressos
+          </Link>
+        </main>
+      </>
     );
   }
 
@@ -62,69 +69,80 @@ export function ModalidadeDetalhe({ slug }: { slug: string }) {
   const itensIncluidos = toStringList(modalidade.itens_incluidos);
   const itensNaoIncluidos = toStringList(modalidade.itens_nao_incluidos);
 
+  const secoes: { titulo: string; itens?: string[]; texto?: string | null }[] = [
+    { titulo: "Para quem é", texto: modalidade.para_quem_e },
+    { titulo: "O que está incluído", itens: itensIncluidos },
+    { titulo: "O que não está incluído", itens: itensNaoIncluidos },
+    { titulo: "Condições", texto: modalidade.condicoes },
+  ];
+
   return (
-    <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-      <p>
-        <Link href="/ingressos">← Voltar para ingressos</Link>
-      </p>
+    <>
+      <PageHeader title={modalidade.nome} description={modalidade.descricao ?? undefined} />
 
-      <h1>{modalidade.nome}</h1>
-      <p>{modalidade.descricao ?? "Em breve"}</p>
+      <main id="conteudo" className="container-site py-10 sm:py-14">
+        <div className="max-w-3xl">
+          <Link
+            href="/ingressos"
+            className="inline-flex min-h-11 items-center text-vinho underline underline-offset-4 decoration-ambar hover:decoration-ambar-escuro"
+          >
+            ← Voltar para ingressos
+          </Link>
 
-      <h2>Para quem é</h2>
-      <p>{modalidade.para_quem_e ?? "A definir"}</p>
+          <div className="mt-6 divide-y divide-border border-y border-border">
+            {secoes.map((secao) => (
+              <section key={secao.titulo} className="py-7">
+                <h2 className="rotulo-secao text-ambar-texto">{secao.titulo}</h2>
+                <span aria-hidden="true" className="filete mt-4" />
 
-      <h2>O que está incluído</h2>
-      {itensIncluidos.length > 0 ? (
-        <ul>
-          {itensIncluidos.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>Em breve</p>
-      )}
+                {secao.itens ? (
+                  secao.itens.length > 0 ? (
+                    <ul className="mt-6 flex flex-col gap-2">
+                      {secao.itens.map((item) => (
+                        <li key={item} className="flex gap-3 text-[17px] leading-7 text-marrom">
+                          <span aria-hidden="true" className="text-dourado">
+                            ✦
+                          </span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-6 text-[17px] leading-7 text-marrom-suave">Em breve</p>
+                  )
+                ) : (
+                  <p className="mt-6 text-[17px] leading-7 text-marrom">{secao.texto ?? "A definir"}</p>
+                )}
+              </section>
+            ))}
+          </div>
 
-      <h2>O que não está incluído</h2>
-      {itensNaoIncluidos.length > 0 ? (
-        <ul>
-          {itensNaoIncluidos.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>Em breve</p>
-      )}
+          <section aria-labelledby="preco-titulo" className="mt-10 rounded-card border border-border bg-areia px-5 py-6">
+            <h2 id="preco-titulo" className="rotulo-secao text-ambar-texto">
+              Preço e disponibilidade
+            </h2>
+            <p className="mt-4 font-display text-3xl text-vinho">
+              {loteAtivo?.preco != null ? formatCurrencyBRL(loteAtivo.preco) : "Preço a definir"}
+            </p>
+            <p className="mt-2 text-[15px] text-marrom-suave">
+              {disponibilidade != null ? `${disponibilidade} vaga(s) disponível(is)` : "Disponibilidade a definir"}
+            </p>
 
-      <h2>Condições</h2>
-      <p>{modalidade.condicoes ?? "A definir"}</p>
-
-      <h2>Preço e disponibilidade</h2>
-      <p style={{ fontWeight: "bold" }}>
-        {loteAtivo?.preco != null ? formatCurrencyBRL(loteAtivo.preco) : "Preço a definir"}
-      </p>
-      <p>
-        {disponibilidade != null ? `${disponibilidade} vaga(s) disponível(is)` : "Disponibilidade a definir"}
-      </p>
-
-      {compravel && loteAtivo ? (
-        <Link
-          href={`/checkout?lote=${loteAtivo.id}`}
-          onClick={() => trackSelectTicket(modalidade.slug, modalidade.nome)}
-          style={{
-            display: "inline-block",
-            padding: "8px 16px",
-            background: "#111",
-            color: "#fff",
-            borderRadius: 4,
-            textDecoration: "none",
-          }}
-        >
-          Comprar
-        </Link>
-      ) : (
-        <p style={{ color: "#888" }}>Em breve</p>
-      )}
-    </main>
+            {compravel && loteAtivo ? (
+              <CTAButton
+                href={`/checkout?lote=${loteAtivo.id}`}
+                size="lg"
+                onClick={() => trackSelectTicket(modalidade.slug, modalidade.nome)}
+                className="mt-6 w-full sm:w-auto"
+              >
+                Comprar
+              </CTAButton>
+            ) : (
+              <p className="mt-6 text-marrom-suave">Em breve</p>
+            )}
+          </section>
+        </div>
+      </main>
+    </>
   );
 }

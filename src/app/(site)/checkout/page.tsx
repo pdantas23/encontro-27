@@ -1,12 +1,16 @@
 import { Suspense } from "react";
 import { CheckoutPageContent } from "@/components/checkout/CheckoutPageContent";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export default function CheckoutPage() {
   return (
-    <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-      <Suspense fallback={<p>Carregando...</p>}>
-        <CheckoutPageContent />
-      </Suspense>
-    </main>
+    <>
+      <PageHeader title="Finalizar compra" />
+      <main id="conteudo" className="container-site py-10 sm:py-14">
+        <Suspense fallback={<p className="text-marrom-suave">Carregando…</p>}>
+          <CheckoutPageContent />
+        </Suspense>
+      </main>
+    </>
   );
 }

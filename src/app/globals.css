@@ -228,7 +228,29 @@ body {
 /* Fundo botânico line-art (p.1-12 do manual), bem sutil */
 @utility bg-botanico {
   background-color: var(--color-papel);
-  background-image: url("/encontro27/brand/fundo-botanico.webp");
+  /* caminho com basePath definido em app/layout.tsx (--bg-botanico) */
+  background-image: var(--bg-botanico);
   background-size: cover;
   background-position: center;
+}
+
+/* Rótulo de seção do manual: serifa em caixa alta espaçada (p.4-10:
+   "CONCEITO DO LOGO", "ELEMENTOS", "ESTAMPAS", "VARIAÇÕES"). Diferente do
+   .eyebrow, que é a legenda em sans do manual ("CAJU - FLOR DO CAJUEIRO"). */
+@utility rotulo-secao {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+/* Filete dourado sob o rótulo/título de seção. Está em 7 das 12 páginas do
+   manual: traço curto, alinhado à esquerda do bloco de título. */
+@utility filete {
+  display: block;
+  width: 6.5rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-dourado-linha);
 }

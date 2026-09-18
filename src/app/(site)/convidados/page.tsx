@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type Palestrante = Database["public"]["Tables"]["palestrantes_encontro27"]["Row"];
 
@@ -21,63 +22,58 @@ export default function ConvidadosPage() {
     load();
   }, []);
 
-  if (palestrantes === undefined) {
-    return (
-      <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-        <p>Carregando...</p>
-      </main>
-    );
-  }
-
-  if (!palestrantes || palestrantes.length === 0) {
-    return (
-      <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-        <h1>Convidados</h1>
-        <p>Convidados em breve.</p>
-      </main>
-    );
-  }
-
   return (
-    <main style={{ maxWidth: 720, margin: "40px auto", padding: 16 }}>
-      <h1>Convidados</h1>
+    <>
+      <PageHeader
+        title="Convidados"
+        description="Quem sobe ao palco do O Encontro 2027."
+      />
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        {palestrantes.map((pessoa) => (
-          <div key={pessoa.id} style={{ display: "flex", gap: 16, borderBottom: "1px solid #eee", paddingBottom: 16 }}>
-            {pessoa.foto_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={pessoa.foto_url}
-                alt={pessoa.nome}
-                style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 8, flexShrink: 0 }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: 8,
-                  background: "#eee",
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 12,
-                  color: "#888",
-                }}
-              >
-                Foto em breve
-              </div>
-            )}
-            <div>
-              <h2 style={{ margin: 0 }}>{pessoa.nome}</h2>
-              <p style={{ margin: "4px 0", color: "#555" }}>{pessoa.funcao ?? "Função a definir"}</p>
-              <p style={{ margin: 0 }}>{pessoa.bio ?? "Biografia em breve."}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </main>
+      <main id="conteudo" className="container-site py-10 sm:py-14">
+        {palestrantes === undefined ? (
+          <p className="text-marrom-suave">Carregando…</p>
+        ) : !palestrantes || palestrantes.length === 0 ? (
+          <p className="text-marrom-suave">Os convidados desta edição serão anunciados em breve.</p>
+        ) : (
+          <ul className="max-w-3xl divide-y divide-border border-y border-border">
+            {palestrantes.map((pessoa) => (
+              <li key={pessoa.id} className="flex gap-5 py-7 sm:gap-6">
+                <div className="size-24 sm:size-28 shrink-0 overflow-hidden rounded-full border border-border bg-areia">
+                  {pessoa.foto_url ? (
+                    // Fotos vêm de URL externa cadastrada no painel; sem otimização (output: export).
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={pessoa.foto_url}
+                      alt=""
+                      width={112}
+                      height={112}
+                      loading="lazy"
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="flex size-full items-center justify-center font-display text-3xl text-dourado"
+                    >
+                      {pessoa.nome.trim().charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <h2 className="font-display text-2xl text-heading leading-snug">{pessoa.nome}</h2>
+                  {pessoa.funcao ? (
+                    <p className="rotulo-secao mt-2 text-ambar-texto text-[0.8rem]">{pessoa.funcao}</p>
+                  ) : null}
+                  {pessoa.bio ? (
+                    <p className="mt-4 text-[17px] leading-7 text-marrom text-pretty">{pessoa.bio}</p>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
+    </>
   );
 }

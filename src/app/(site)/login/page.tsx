@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { CTAButton } from "@/components/ui/CTAButton";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -26,32 +28,45 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ maxWidth: 420, margin: "60px auto", padding: 16 }}>
-      <h1>Minha conta</h1>
-      <p>Acesse com o e-mail usado na compra do seu ingresso — sem senha, você recebe um link por e-mail.</p>
+    <>
+      <PageHeader
+        title="Minha conta"
+        description="Acesse com o e-mail usado na compra do seu ingresso — sem senha, você recebe um link por e-mail."
+      />
 
-      {status === "enviado" ? (
-        <p>
-          Enviamos um link de acesso para <strong>{email}</strong>. Abra seu e-mail e clique no link para entrar.
-        </p>
-      ) : (
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
-          <label>
-            E-mail
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              style={{ display: "block", width: "100%" }}
-            />
-          </label>
-          {status === "erro" && <p style={{ color: "crimson" }}>Não foi possível enviar o link. Tente novamente.</p>}
-          <button type="submit" disabled={status === "enviando"}>
-            {status === "enviando" ? "Enviando..." : "Receber link de acesso"}
-          </button>
-        </form>
-      )}
-    </main>
+      <main id="conteudo" className="container-site py-10 sm:py-14">
+        <div className="max-w-md">
+          {status === "enviado" ? (
+            <p className="rounded-card border border-dourado/50 bg-areia px-5 py-4 text-[17px] leading-7 text-marrom">
+              Enviamos um link de acesso para <strong className="text-vinho">{email}</strong>. Abra seu e-mail e
+              clique no link para entrar.
+            </p>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <label>
+                E-mail
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </label>
+
+              {status === "erro" ? (
+                <p role="alert" className="border-l-2 border-vermelho pl-4 text-marrom">
+                  Não foi possível enviar o link. Tente novamente.
+                </p>
+              ) : null}
+
+              <CTAButton type="submit" disabled={status === "enviando"} className="mt-2">
+                {status === "enviando" ? "Enviando…" : "Receber link de acesso"}
+              </CTAButton>
+            </form>
+          )}
+        </div>
+      </main>
+    </>
   );
 }

@@ -22,8 +22,9 @@ export function CincoAnosSection() {
           className="w-full aspect-[16/9] lg:aspect-[4/5] object-cover rounded-lg lg:col-span-5 order-last lg:order-first"
         />
         <div className="lg:col-span-7">
-          <p className="eyebrow text-ambar-texto">5 anos</p>
-          <h2 id="cinco-anos-titulo" className="font-display text-heading mt-3 text-[1.75rem] sm:text-4xl lg:text-[2.75rem] leading-[1.15] sm:leading-[1.1] text-balance">
+          <p className="rotulo-secao text-ambar-texto">5 anos</p>
+          <span aria-hidden="true" className="filete mt-4" />
+          <h2 id="cinco-anos-titulo" className="font-display text-heading mt-5 text-[1.75rem] sm:text-4xl lg:text-[2.75rem] leading-[1.15] sm:leading-[1.1] text-balance">
             Inspirado no cajueiro: da flor à castanha, da folha larga à força das raízes.
           </h2>
           <p className="mt-5 sm:mt-6 max-w-xl text-[19px] leading-8 sm:text-lg sm:leading-relaxed text-marrom">

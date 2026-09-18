@@ -53,27 +53,32 @@ export function CheckoutPageContent() {
   }, [loteId]);
 
   const naoEncontrado = (
-    <div>
-      <h1>Ingresso não encontrado</h1>
-      <Link href="/ingressos">Voltar para ingressos</Link>
+    <div className="max-w-2xl">
+      <h2 className="font-display text-2xl text-heading">Ingresso não encontrado</h2>
+      <Link
+        href="/ingressos"
+        className="mt-4 inline-flex min-h-11 items-center text-vinho underline underline-offset-4 decoration-ambar hover:decoration-ambar-escuro"
+      >
+        Voltar para ingressos
+      </Link>
     </div>
   );
 
   if (!loteId) return naoEncontrado;
-  if (lote === undefined) return <p>Carregando...</p>;
+  if (lote === undefined) return <p className="text-marrom-suave">Carregando…</p>;
   if (!lote) return naoEncontrado;
 
   if (lote.status !== "ativo") {
-    return <p>Esta modalidade não está disponível para compra no momento.</p>;
+    return <p className="max-w-2xl text-[17px] leading-7 text-marrom">Esta modalidade não está disponível para compra no momento.</p>;
   }
 
   if (lote.preco == null || !lote.hypercash_checkout_url) {
-    return <p>Esta modalidade ainda não está com preço e pagamento configurados. Volte em breve.</p>;
+    return <p className="max-w-2xl text-[17px] leading-7 text-marrom">Esta modalidade ainda não está com preço e pagamento configurados. Volte em breve.</p>;
   }
 
   const disponivel = lote.quantidade == null ? null : lote.quantidade - lote.quantidade_vendida;
   if (disponivel !== null && disponivel <= 0) {
-    return <p>Ingressos esgotados para esta modalidade.</p>;
+    return <p className="max-w-2xl text-[17px] leading-7 text-marrom">Ingressos esgotados para esta modalidade.</p>;
   }
 
   return <CheckoutWizard lote={lote} />;

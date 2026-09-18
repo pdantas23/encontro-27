@@ -48,13 +48,21 @@ export function OfertaAlmocoStart({ pedidos }: { pedidos: MeuPedido[] }) {
   if (!temStart || jaTemAlmocoStart || !lote || lote.preco == null || !lote.hypercash_checkout_url) return null;
 
   return (
-    <section aria-labelledby="oferta-almoco-titulo" style={{ border: "1px solid #ceb283", borderRadius: 12, padding: 16, marginTop: 24 }}>
-      <h2 id="oferta-almoco-titulo" style={{ marginTop: 0 }}>Almoço de Negócios para quem tem Start</h2>
-      <p>
+    <section
+      aria-labelledby="oferta-almoco-titulo"
+      className="mt-8 rounded-card border border-dourado-linha bg-areia px-5 py-5"
+    >
+      <h2 id="oferta-almoco-titulo" className="font-display text-2xl text-heading leading-snug">
+        Almoço de Negócios para quem tem Start
+      </h2>
+      <p className="mt-3 text-[17px] leading-7 text-marrom">
         {lote.modalidades_encontro27?.para_quem_e ?? "Exclusivo para participantes que já possuem ingresso Start."} Valor:{" "}
-        <strong>{formatCurrencyBRL(lote.preco)}</strong>.
+        <strong className="text-vinho">{formatCurrencyBRL(lote.preco)}</strong>.
       </p>
-      <Link href={`/checkout?lote=${lote.id}`} className="inline-flex min-h-11 items-center rounded-pill bg-ambar-escuro px-5 font-semibold text-papel">
+      <Link
+        href={`/checkout?lote=${lote.id}`}
+        className="mt-5 inline-flex min-h-11 items-center rounded-pill bg-ambar-escuro px-5 font-semibold text-papel hover:bg-ambar-pressed"
+      >
         Adicionar o Almoço — Start
       </Link>
     </section>
