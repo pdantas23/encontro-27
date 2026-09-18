@@ -103,6 +103,23 @@ globais do painel aplicados):
 - [ ] Interações de `Dropdown`/`Modal` (teclado, clique fora, animações)
       foram validadas só por build/lint/HTML — falta uma passada no navegador.
 
+## Cadastro de participante sem confirmação de e-mail
+
+O `signUp` público do Supabase responde `500 Error sending confirmation email`:
+o servidor de autenticação (compartilhado com outros projetos) exige confirmação,
+mas o SMTP dele é o de teste (`supabase-mail`, remetente `fake_sender`) e não
+entrega nada. Por decisão do dono do projeto, o cadastro passa pela nossa API
+(`POST /cadastro`, `api/src/routes/cadastro.ts`), que cria a conta com o e-mail
+já marcado como confirmado, e o navegador faz o login em seguida.
+
+- [ ] **Risco aceito:** sem confirmação, quem cadastra o e-mail de outra pessoa
+      passa a ver os ingressos/QR codes dela e a receber transferências
+      destinadas a ela (tudo é ligado ao e-mail da sessão).
+- [ ] Quando houver SMTP real no servidor de autenticação: voltar ao `signUp`
+      do Supabase com confirmação por e-mail e remover a rota `/cadastro`.
+- [ ] A rota tem limite de 10 cadastros por IP a cada 15 min, só em memória
+      (zera quando a API reinicia).
+
 ## Antes de lançar
 
 - [ ] Confirmar que nenhum `PREVIEW_FAKE` (ou equivalente) restou no código.

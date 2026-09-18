@@ -8,6 +8,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createClient } from "@/lib/supabase/client";
 import { cadastroSchema, type CadastroFormValues } from "@/lib/validators/auth";
 import { CTAButton } from "@/components/ui/CTAButton";
+import { PasswordInput } from "@/components/ui/PasswordInput";
+import { formatarTelefone } from "@/lib/utils";
+
+const MENSAGENS_ERRO: Record<string, string> = {
+  email_ja_cadastrado: "Já existe uma conta com esse e-mail.",
+  muitas_tentativas: "Muitas tentativas seguidas. Aguarde alguns minutos e tente de novo.",
+  senha_fraca: "Escolha uma senha mais forte.",
+};
 
 export function CadastroForm() {
   const router = useRouter();
@@ -23,34 +31,50 @@ export function CadastroForm() {
     formState: { errors },
   } = useForm<CadastroFormValues>({ resolver: zodResolver(cadastroSchema) });
 
+  // Máscara aplicada no próprio evento, antes do react-hook-form ler o valor, pra
+  // o que fica guardado ser o texto já formatado.
+  const { onChange: onChangeWhatsapp, ...campoWhatsapp } = register("whatsapp");
+
+  const linkLogin =
+    redirect === "/minha-conta/ingressos" ? "/login" : `/login?redirect=${encodeURIComponent(redirect)}`;
+
   async function onSubmit(values: CadastroFormValues) {
     setEnviando(true);
     setErro(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.senha,
-      // Prefill de checkouts futuros: CheckoutWizard ainda pede nome/WhatsApp de
-      // novo hoje, mas já fica disponível aqui pra quando isso for reaproveitado.
-      options: { data: { nome: values.nome, whatsapp: values.whatsapp } },
-    });
+    // A conta é criada pela nossa API (e-mail já confirmado): o signUp público do
+    // Supabase exige e-mail de confirmação e o SMTP do servidor não está em uso.
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    let resposta: Response | null = null;
+    if (apiUrl) {
+      resposta = await fetch(`${apiUrl}/cadastro`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: values.email,
+          senha: values.senha,
+          nome: values.nome,
+          whatsapp: values.whatsapp,
+        }),
+      }).catch(() => null);
+    }
 
-    if (error) {
-      setErro(
-        error.message.toLowerCase().includes("registered") || error.message.toLowerCase().includes("exists")
-          ? "Já existe uma conta com esse e-mail."
-          : "Não foi possível criar sua conta. Tente novamente.",
-      );
+    if (!resposta?.ok) {
+      const dados = (await resposta?.json().catch(() => null)) as { error?: string } | null;
+      setErro(MENSAGENS_ERRO[dados?.error ?? ""] ?? "Não foi possível criar sua conta. Tente novamente.");
       setEnviando(false);
       return;
     }
 
-    router.push(redirect);
-  }
+    const supabase = createClient();
+    const { error: erroLogin } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.senha,
+    });
 
-  const linkLogin =
-    redirect === "/minha-conta/ingressos" ? "/login" : `/login?redirect=${encodeURIComponent(redirect)}`;
+    // Conta criada, mas a entrada automática falhou: a pessoa entra pela tela de login.
+    router.push(erroLogin ? linkLogin : redirect);
+  }
 
   return (
     <div className="rounded-card border border-border bg-papel p-8 shadow-card">
@@ -71,20 +95,28 @@ export function CadastroForm() {
 
         <label>
           WhatsApp (com DDD)
-          <input inputMode="tel" autoComplete="tel" {...register("whatsapp")} />
+          <input
+            inputMode="tel"
+            autoComplete="tel"
+            {...campoWhatsapp}
+            onChange={(event) => {
+              event.target.value = formatarTelefone(event.target.value);
+              onChangeWhatsapp(event);
+            }}
+          />
         </label>
         {errors.whatsapp && <p className="text-sm text-vermelho">{errors.whatsapp.message}</p>}
 
-        <label>
-          Senha
-          <input type="password" autoComplete="new-password" {...register("senha")} />
-        </label>
+        <div>
+          <label htmlFor="cadastro-senha">Senha</label>
+          <PasswordInput id="cadastro-senha" autoComplete="new-password" {...register("senha")} />
+        </div>
         {errors.senha && <p className="text-sm text-vermelho">{errors.senha.message}</p>}
 
-        <label>
-          Confirmar senha
-          <input type="password" autoComplete="new-password" {...register("confirmarSenha")} />
-        </label>
+        <div>
+          <label htmlFor="cadastro-confirmar-senha">Confirmar senha</label>
+          <PasswordInput id="cadastro-confirmar-senha" autoComplete="new-password" {...register("confirmarSenha")} />
+        </div>
         {errors.confirmarSenha && <p className="text-sm text-vermelho">{errors.confirmarSenha.message}</p>}
 
         {erro && (

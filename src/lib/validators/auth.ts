@@ -14,11 +14,11 @@ export const cadastroSchema = z
   .object({
     nome: z.string().trim().min(3, "Informe seu nome completo"),
     email: z.string().trim().email("E-mail inválido"),
+    // A máscara do formulário já garante só dígitos/pontuação; o que importa é ter DDD + número.
     whatsapp: z
       .string()
       .trim()
-      .min(10, "Informe um WhatsApp válido com DDD")
-      .regex(/^[\d\s()+-]+$/, "Use apenas números"),
+      .refine((valor) => valor.replace(/\D/g, "").length >= 10, "Informe um WhatsApp válido com DDD"),
     senha: senhaSchema,
     confirmarSenha: z.string(),
   })

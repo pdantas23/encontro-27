@@ -1,13 +1,14 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import cadastro from './routes/cadastro.js'
 import criarCheckout from './routes/criar-checkout.js'
 import webhookHypercash from './routes/webhook-hypercash.js'
 
 const app = new Hono()
 
 // ---------------------------------------------------------------------------
-// CORS — só a rota chamada pelo browser (criar-checkout) precisa disso.
+// CORS — só as rotas chamadas pelo browser (criar-checkout, cadastro) precisam disso.
 // ---------------------------------------------------------------------------
 
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
@@ -31,6 +32,8 @@ const corsMiddleware = cors({
 
 app.use('/criar-checkout/*', corsMiddleware)
 app.use('/criar-checkout', corsMiddleware)
+app.use('/cadastro/*', corsMiddleware)
+app.use('/cadastro', corsMiddleware)
 
 // ---------------------------------------------------------------------------
 // Rotas
@@ -39,6 +42,7 @@ app.use('/criar-checkout', corsMiddleware)
 app.get('/health', (c) => c.json({ ok: true }))
 
 app.route('/criar-checkout', criarCheckout)
+app.route('/cadastro', cadastro)
 
 // Server-to-server: a Hypercash chama esta rota, nenhum browser chama.
 // Por isso fica fora do CORS — a autenticação é o segredo na URL.
