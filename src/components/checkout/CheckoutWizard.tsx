@@ -23,7 +23,7 @@ const QUANTIDADE = 1;
 
 type Step = 1 | 2;
 
-export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
+export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; userEmail: string }) {
   const [step, setStep] = useState<Step>(1);
   const [comprador, setComprador] = useState<CompradorFormValues | null>(null);
   const [aceiteTermos, setAceiteTermos] = useState(false);
@@ -44,12 +44,14 @@ export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
     formState: { errors: compradorErrors },
   } = useForm<CompradorFormValues>({
     resolver: zodResolver(compradorSchema),
-    defaultValues: comprador ?? undefined,
+    // O e-mail vem da sessão e não é editável: é ele que liga o pedido à conta
+    // onde o ingresso e o QR Code aparecem depois.
+    defaultValues: { ...(comprador ?? {}), email: userEmail },
   });
 
   function handleComprador(values: CompradorFormValues) {
     if (!comprador) trackBeginCheckout(lote.modalidade.slug, QUANTIDADE);
-    setComprador(values);
+    setComprador({ ...values, email: userEmail });
     setErro(null);
     setStep(2);
   }
@@ -186,9 +188,11 @@ export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
             <div>
               <label>
                 E-mail
-                <input type="email" autoComplete="email" {...registerComprador("email")} />
+                <input type="email" readOnly value={userEmail} className="bg-areia text-marrom-suave" />
               </label>
-              {compradorErrors.email && <p className="mt-2 border-l-2 border-vermelho pl-3 text-sm text-marrom">{compradorErrors.email.message}</p>}
+              <p className="mt-2 text-sm text-marrom-suave">
+                E-mail da conta em que você entrou. O ingresso e o QR Code ficam nela.
+              </p>
             </div>
             <div>
               <label>

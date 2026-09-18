@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { CheckoutWizard } from "./CheckoutWizard";
+import { CheckoutAuthGate } from "./CheckoutAuthGate";
 import type { LoteComModalidade } from "@/types/checkout";
 
 export function CheckoutPageContent() {
@@ -81,5 +82,7 @@ export function CheckoutPageContent() {
     return <p className="max-w-2xl text-[17px] leading-7 text-marrom">Ingressos esgotados para esta modalidade.</p>;
   }
 
-  return <CheckoutWizard lote={lote} />;
+  // Só entra no wizard com sessão: o pedido nasce colado ao e-mail da conta,
+  // que é o que a área do usuário usa para mostrar ingresso e QR Code.
+  return <CheckoutAuthGate>{(email) => <CheckoutWizard lote={lote} userEmail={email} />}</CheckoutAuthGate>;
 }
