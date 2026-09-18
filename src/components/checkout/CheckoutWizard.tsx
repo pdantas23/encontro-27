@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CTAButton } from "@/components/ui/CTAButton";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -24,6 +25,7 @@ const QUANTIDADE = 1;
 type Step = 1 | 2;
 
 export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; userEmail: string }) {
+  const router = useRouter();
   const [step, setStep] = useState<Step>(1);
   const [comprador, setComprador] = useState<CompradorFormValues | null>(null);
   const [aceiteTermos, setAceiteTermos] = useState(false);
@@ -56,7 +58,7 @@ export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; u
     setStep(2);
   }
 
-  async function irParaPagamento(pedidoId: string) {
+  async function irParaPagamento(pedidoId: string, email: string, abaPagamento: Window | null) {
     trackAddPaymentInfo(lote.modalidade.slug);
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -70,18 +72,34 @@ export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; u
     const data = (await response.json().catch(() => null)) as { checkoutUrl?: string; error?: string } | null;
 
     if (!response.ok || !data?.checkoutUrl) {
+      abaPagamento?.close();
       throw new Error(data?.error ?? "falha_ao_criar_checkout");
     }
 
-    // Navegação de página inteira proposital: output "export" não tem
-    // servidor, e o destino é externo (checkout hospedado pela Hypercash).
-    window.location.href = data.checkoutUrl;
+    // Paga numa aba nova; a aba atual fica na nossa tela de status, que já
+    // consulta sozinha até o webhook aprovar (ver PedidoStatus) — a Hypercash
+    // não devolve o comprador pra uma URL nossa depois do pagamento.
+    if (abaPagamento) {
+      abaPagamento.location.href = data.checkoutUrl;
+    } else {
+      // Bloqueador de pop-up impediu abrir a aba (raro, já que window.open
+      // roda no mesmo clique do usuário): cai pro comportamento antigo.
+      window.location.href = data.checkoutUrl;
+      return;
+    }
+
+    router.push(`/checkout/pendente?pedido=${pedidoId}&email=${encodeURIComponent(email)}`);
   }
 
   async function handleConfirmar() {
     if (!comprador || !aceiteTermos || enviando) return;
     setEnviando(true);
     setErro(null);
+
+    // Abre a aba já aqui, ainda síncrono dentro do clique do usuário — depois
+    // de um `await`, o navegador não reconhece mais como ação direta e
+    // bloqueia o window.open como pop-up.
+    const abaPagamento = window.open("", "_blank");
 
     const supabase = createClient();
 
@@ -137,8 +155,9 @@ export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; u
       // Não limpa pedidoPendente antes daqui: se irParaPagamento falhar
       // (Hypercash fora do ar, por exemplo), "Tentar novamente" precisa
       // pular direto pra criação do link, sem duplicar pedido/participante.
-      await irParaPagamento(pedidoId);
+      await irParaPagamento(pedidoId, comprador.email, abaPagamento);
     } catch {
+      abaPagamento?.close();
       setErro(
         pedidoRegistrado
           ? "Seu pedido está registrado, mas não conseguimos gerar o link de pagamento agora. Tente novamente."
@@ -229,8 +248,8 @@ export function CheckoutWizard({ lote, userEmail }: { lote: LoteComModalidade; u
           </dl>
 
           <p className="mt-6 text-[17px] leading-7 text-marrom">
-            Ao confirmar, você será direcionado para o pagamento seguro na Hypercash. O ingresso é liberado assim
-            que o pagamento for aprovado.
+            Ao confirmar, o pagamento seguro na Hypercash abre numa nova aba. Pode voltar pra esta aba depois de
+            pagar — ela atualiza sozinha e o ingresso é liberado assim que o pagamento for aprovado.
           </p>
 
           <label className="mt-6 flex items-start gap-3 font-normal text-marrom">

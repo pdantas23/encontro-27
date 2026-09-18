@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CTAButton } from "@/components/ui/CTAButton";
 import { createClient } from "@/lib/supabase/client";
@@ -22,7 +22,10 @@ import type { PedidoResumo } from "@/types/checkout";
  */
 const POLL_INTERVALO_MS = 4000;
 const POLL_LIMITE = 20; // ~80 segundos
+const REDIRECT_APROVADO_MS = 6000;
+
 export function PedidoStatus() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const pedidoId = searchParams.get("pedido");
   const email = searchParams.get("email");
@@ -62,6 +65,19 @@ export function PedidoStatus() {
     };
   }, [pedidoId, email]);
 
+  // A Hypercash não devolve o comprador pra uma URL nossa depois do
+  // pagamento (confirmado: o link de pagamento não tem esse campo). Então
+  // é esta tela — reaberta ou deixada aberta durante o pagamento — que leva
+  // o comprador pra conta dele assim que vê "aprovado", com um tempinho pra
+  // ele ler a confirmação antes de sair da página.
+  useEffect(() => {
+    if (pedido?.status_pagamento !== "aprovado") return;
+    const timer = setTimeout(() => {
+      router.push("/minha-conta");
+    }, REDIRECT_APROVADO_MS);
+    return () => clearTimeout(timer);
+  }, [pedido?.status_pagamento, router]);
+
   const naoEncontrado = (
     <div className="max-w-2xl">
       <h2 className="font-display text-2xl sm:text-3xl text-heading">Pedido não encontrado</h2>
@@ -90,6 +106,7 @@ export function PedidoStatus() {
             Obrigado, {pedido.comprador_nome}! Seu ingresso para <strong>{pedido.modalidade_nome}</strong> já está
             confirmado.
           </p>
+          <p className="mt-2 text-[15px] text-marrom-suave">Levando você pra sua conta em instantes…</p>
         </>
       )}
 
