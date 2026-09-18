@@ -23,17 +23,17 @@ const QUANTIDADE = 1;
 
 type Step = 1 | 2;
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-
 export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
   const [step, setStep] = useState<Step>(1);
   const [comprador, setComprador] = useState<CompradorFormValues | null>(null);
   const [aceiteTermos, setAceiteTermos] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
-  // Pedido já gravado mas sem participante (falha de rede no 2º insert):
-  // o "tentar novamente" completa este pedido em vez de criar outro.
+  // Pedido já gravado (talvez até com participante) mas sem link de
+  // pagamento ainda: o "tentar novamente" completa a partir daqui em vez
+  // de criar um pedido/participante duplicado.
   const [pedidoPendente, setPedidoPendente] = useState<string | null>(null);
+  const [participanteRegistrado, setParticipanteRegistrado] = useState(false);
 
   const precoUnitario = lote.preco ?? 0;
   const valorTotal = precoUnitario * QUANTIDADE;
@@ -54,17 +54,26 @@ export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
     setStep(2);
   }
 
-  function irParaPagamento(pedidoId: string, email: string) {
+  async function irParaPagamento(pedidoId: string) {
     trackAddPaymentInfo(lote.modalidade.slug);
-    // Navegação de página inteira proposital: output "export" não tem servidor.
-    // Vai direto ao link de pagamento do lote; a página "pendente" fica como
-    // retorno e fallback quando o lote não tiver link.
-    if (lote.hypercash_checkout_url) {
-      window.location.href = lote.hypercash_checkout_url;
-      return;
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL não configurada");
+
+    const response = await fetch(`${apiUrl}/criar-checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pedidoId }),
+    });
+    const data = (await response.json().catch(() => null)) as { checkoutUrl?: string; error?: string } | null;
+
+    if (!response.ok || !data?.checkoutUrl) {
+      throw new Error(data?.error ?? "falha_ao_criar_checkout");
     }
-    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    window.location.href = `${basePath}/checkout/pendente?pedido=${pedidoId}&email=${encodeURIComponent(email)}`;
+
+    // Navegação de página inteira proposital: output "export" não tem
+    // servidor, e o destino é externo (checkout hospedado pela Hypercash).
+    window.location.href = data.checkoutUrl;
   }
 
   async function handleConfirmar() {
@@ -73,6 +82,12 @@ export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
     setErro(null);
 
     const supabase = createClient();
+
+    // Espelha pedidoPendente para uso no catch: setPedidoPendente só vale no
+    // próximo render, então ler o state aqui diria "não registrado" para um
+    // pedido que acabou de ser gravado — e o comprador veria "não foi possível
+    // registrar seu pedido" quando na verdade só o link de pagamento falhou.
+    let pedidoRegistrado = pedidoPendente;
 
     try {
       // O id é gerado aqui: o comprador anônimo pode inserir, mas não pode
@@ -102,23 +117,29 @@ export function CheckoutWizard({ lote }: { lote: LoteComModalidade }) {
         });
         if (pedidoError) throw pedidoError;
         pedidoId = novoId;
+        pedidoRegistrado = novoId;
         setPedidoPendente(novoId);
       }
 
       // Com 1 ingresso, o participante é o próprio comprador.
-      const { error: participantesError } = await supabase.from("participantes_encontro27").insert({
-        pedido_id: pedidoId,
-        nome: comprador.nome,
-        email: comprador.email,
-      });
-      if (participantesError) throw participantesError;
+      if (!participanteRegistrado) {
+        const { error: participantesError } = await supabase.from("participantes_encontro27").insert({
+          pedido_id: pedidoId,
+          nome: comprador.nome,
+          email: comprador.email,
+        });
+        if (participantesError) throw participantesError;
+        setParticipanteRegistrado(true);
+      }
 
-      setPedidoPendente(null);
-      irParaPagamento(pedidoId, comprador.email);
+      // Não limpa pedidoPendente antes daqui: se irParaPagamento falhar
+      // (Hypercash fora do ar, por exemplo), "Tentar novamente" precisa
+      // pular direto pra criação do link, sem duplicar pedido/participante.
+      await irParaPagamento(pedidoId);
     } catch {
       setErro(
-        pedidoPendente
-          ? "Seu pedido foi registrado, mas faltou concluir o cadastro do participante. Tente novamente."
+        pedidoRegistrado
+          ? "Seu pedido está registrado, mas não conseguimos gerar o link de pagamento agora. Tente novamente."
           : "Não foi possível registrar seu pedido. Verifique sua conexão e tente novamente.",
       );
       setEnviando(false);

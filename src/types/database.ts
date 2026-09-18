@@ -148,6 +148,8 @@ export interface Database {
           valor_total: number;
           status_pagamento: StatusPagamento;
           hypercash_url_usado: string | null;
+          hypercash_payment_link_id: string | null;
+          hypercash_checkout_criado_em: string | null;
           utm_source: string | null;
           utm_medium: string | null;
           utm_campaign: string | null;
@@ -172,6 +174,8 @@ export interface Database {
           valor_total: number;
           status_pagamento?: StatusPagamento;
           hypercash_url_usado?: string | null;
+          hypercash_payment_link_id?: string | null;
+          hypercash_checkout_criado_em?: string | null;
           utm_source?: string | null;
           utm_medium?: string | null;
           utm_campaign?: string | null;

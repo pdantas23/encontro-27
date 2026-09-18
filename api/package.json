@@ -1,0 +1,22 @@
+{
+  "name": "encontro27-api",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=../.env.local src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.1",
+    "@supabase/supabase-js": "^2.49.8",
+    "hono": "^4.7.11",
+    "ws": "^8.20.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

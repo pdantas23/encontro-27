@@ -72,8 +72,8 @@ export function CheckoutPageContent() {
     return <p className="max-w-2xl text-[17px] leading-7 text-marrom">Esta modalidade não está disponível para compra no momento.</p>;
   }
 
-  if (lote.preco == null || !lote.hypercash_checkout_url) {
-    return <p className="max-w-2xl text-[17px] leading-7 text-marrom">Esta modalidade ainda não está com preço e pagamento configurados. Volte em breve.</p>;
+  if (lote.preco == null) {
+    return <p className="max-w-2xl text-[17px] leading-7 text-marrom">Esta modalidade ainda não está com preço configurado. Volte em breve.</p>;
   }
 
   const disponivel = lote.quantidade == null ? null : lote.quantidade - lote.quantidade_vendida;
