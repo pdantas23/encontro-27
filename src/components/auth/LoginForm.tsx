@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createClient } from "@/lib/supabase/client";
@@ -68,9 +69,12 @@ export function LoginForm() {
         </CTAButton>
       </form>
 
-      <CTAButton href={linkCadastro} variant="secondary" className="mt-4 w-full justify-center">
-        Criar conta
-      </CTAButton>
+      <p className="mt-6 text-center text-[15px] text-marrom-suave">
+        Ainda não tem conta?{" "}
+        <Link href={linkCadastro} className="text-vinho underline underline-offset-4 decoration-ambar">
+          Criar conta
+        </Link>
+      </p>
     </div>
   );
 }
