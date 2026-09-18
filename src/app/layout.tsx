@@ -57,7 +57,6 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },
-  icons: { icon: `${basePath}/brand/flor-ouro-sm.webp` },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -65,6 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="pt-BR"
       data-scroll-behavior="smooth"
+      style={{ "--bg-botanico": `url(${basePath}/brand/fundo-botanico.webp)` } as React.CSSProperties}
       className={`${oranienbaum.variable} ${quicksand.variable} ${libreBaskerville.variable} h-full antialiased`}
     >
       <head>
