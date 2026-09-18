@@ -90,6 +90,8 @@ export default function AdminPedidosPage() {
         status_pagamento: "aprovado",
         confirmado_por: user.userId,
         confirmado_em: new Date().toISOString(),
+        // Separa a aprovação manual da que veio do webhook da Hypercash.
+        aprovado_via: "admin",
       })
       .eq("id", pedido.id);
     setActionLoadingId(null);

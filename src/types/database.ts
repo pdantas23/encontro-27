@@ -150,6 +150,9 @@ export interface Database {
           hypercash_url_usado: string | null;
           hypercash_payment_link_id: string | null;
           hypercash_checkout_criado_em: string | null;
+          hypercash_transaction_id: string | null;
+          hypercash_status_bruto: string | null;
+          aprovado_via: string | null;
           utm_source: string | null;
           utm_medium: string | null;
           utm_campaign: string | null;
@@ -176,6 +179,9 @@ export interface Database {
           hypercash_url_usado?: string | null;
           hypercash_payment_link_id?: string | null;
           hypercash_checkout_criado_em?: string | null;
+          hypercash_transaction_id?: string | null;
+          hypercash_status_bruto?: string | null;
+          aprovado_via?: string | null;
           utm_source?: string | null;
           utm_medium?: string | null;
           utm_campaign?: string | null;

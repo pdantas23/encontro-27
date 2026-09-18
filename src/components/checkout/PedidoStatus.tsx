@@ -10,10 +10,18 @@ import type { PedidoResumo } from "@/types/checkout";
 
 /**
  * Usada pelas 3 rotas de resultado (/checkout/pendente, /sucesso, /erro).
- * Como a Hypercash não tem webhook/retorno automático ainda, o status real
- * é sempre buscado ao vivo pela RPC obter_pedido_encontro27 — a rota pela
- * qual o comprador chegou aqui não decide a mensagem, o status atual decide.
+ * O status real é sempre buscado ao vivo pela RPC obter_pedido_encontro27 —
+ * a rota pela qual o comprador chegou aqui não decide a mensagem, o status
+ * atual decide.
+ *
+ * Enquanto o pedido estiver aguardando, refaz a consulta de poucos em
+ * poucos segundos: o webhook da Hypercash costuma aprovar logo depois do
+ * pagamento, e sem isso o comprador ficaria olhando "aguardando" numa tela
+ * que já está desatualizada. Desiste depois de POLL_LIMITE tentativas para
+ * não consultar para sempre numa aba esquecida aberta.
  */
+const POLL_INTERVALO_MS = 4000;
+const POLL_LIMITE = 20; // ~80 segundos
 export function PedidoStatus() {
   const searchParams = useSearchParams();
   const pedidoId = searchParams.get("pedido");
@@ -26,16 +34,32 @@ export function PedidoStatus() {
     const id = pedidoId;
     const emailNarrowed = email;
 
+    let tentativas = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let ativo = true;
+
     async function load() {
       const supabase = createClient();
       const { data } = await supabase.rpc("obter_pedido_encontro27", {
         p_pedido_id: id,
         p_email: emailNarrowed,
       });
-      setPedido((data as unknown as PedidoResumo | null) ?? null);
+      if (!ativo) return;
+
+      const atual = (data as unknown as PedidoResumo | null) ?? null;
+      setPedido(atual);
+
+      tentativas += 1;
+      if (atual?.status_pagamento === "aguardando_pagamento" && tentativas < POLL_LIMITE) {
+        timer = setTimeout(load, POLL_INTERVALO_MS);
+      }
     }
 
     load();
+    return () => {
+      ativo = false;
+      if (timer) clearTimeout(timer);
+    };
   }, [pedidoId, email]);
 
   const naoEncontrado = (

@@ -64,8 +64,43 @@ Dois detalhes que custam tempo quando pegam de surpresa:
 - **A Hypercash recusa cobranças abaixo de R$ 8,00**, com
   `{"price":["Preço mínimo é R$ 8,00"]}`. Um produto de teste de R$ 0,01 não
   gera link.
-- **Pagar não aprova o pedido.** Não existe webhook: o pedido fica em
-  `aguardando_pagamento` até alguém aprovar manualmente em `/admin/pedidos`.
+- **Pagar aprova o pedido pelo webhook**, não pelo retorno do navegador. Em
+  desenvolvimento a Hypercash não alcança sua máquina: use ngrok, ou simule o
+  POST com `curl` (veja "Aprovação do pagamento"). Sem isso o pedido fica em
+  `aguardando_pagamento` até alguém aprovar em `/admin/pedidos`.
+
+## Aprovação do pagamento
+
+Quem aprova o pedido é o webhook de transação da Hypercash, recebido em
+`POST /webhooks/hypercash/<segredo>` ([api/src/routes/webhook-hypercash.ts](api/src/routes/webhook-hypercash.ts)).
+Ao aprovar, o trigger `trg_pedido_aprovado_encontro27` reserva a vaga no lote
+e o ingresso com QR Code aparece em "Minha conta".
+
+A Hypercash **não assina** os requests. Duas consequências de projeto:
+
+- a autenticação é o segredo na própria URL registrada lá
+  (`HYPERCASH_WEBHOOK_SECRET`, comparado em tempo constante);
+- nada é aprovado no escuro: o valor pago tem de bater com o valor do pedido.
+
+O webhook também não devolve o id do payment-link que criamos por pedido, então
+a ligação transação → pedido é reconstruída por e-mail do comprador + valor
+exato, entre os pedidos ainda aguardando. Quando isso não fecha em exatamente
+um pedido, **nada é aprovado**: o evento fica em
+`webhooks_hypercash_encontro27` com resultado `nao_correlacionado` ou `ambiguo`,
+para aprovação manual em `/admin/pedidos`. Todo payload recebido é gravado
+nessa tabela, e o índice único `(object_id, status)` é o que impede que um
+retry da Hypercash aprove duas vezes.
+
+Para simular sem a Hypercash, com a API rodando local:
+
+```bash
+curl -X POST http://localhost:3002/webhooks/hypercash/$HYPERCASH_WEBHOOK_SECRET \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"transaction","objectId":"tx-1","data":{"id":"tx-1","status":"paid",
+       "amount":38700,"customer":{"email":"comprador@example.com"}}}'
+```
+
+`amount` é em centavos e precisa bater com o `valor_total` do pedido.
 
 ## Painel administrativo
 
