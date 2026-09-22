@@ -1,19 +1,24 @@
 import type { Metadata } from "next";
-import { Oranienbaum, Quicksand, Libre_Baskerville } from "next/font/google";
+import { Quicksand, Libre_Baskerville } from "next/font/google";
+import localFont from "next/font/local";
 import { UtmCapture } from "@/components/tracking/UtmCapture";
 import { GoogleTagManagerScript, GoogleTagManagerNoscript } from "@/components/tracking/GoogleTagManager";
 import "./globals.css";
 
 /**
  * Tipografia da identidade oficial (ver checkpoint L0):
- * - The Seasons (títulos) é comercial → Oranienbaum, presente no próprio manual (p.2).
+ * - The Seasons (títulos) é a fonte do manual. Arquivo próprio em src/fonts,
+ *   servido pelo next/font/local. É fonte comercial (My Creative Land, vendida
+ *   no Adobe Fonts): a licença de uso web fica por conta do Aerton, que decidiu
+ *   por este caminho em 22/09/2026. Só o Regular entrou — é o único peso usado.
  * - Quicksand (corpo) e Libre Baskerville ("2027" do logo) são as fontes originais.
  * Todas via next/font: self-hosted, com fallback ajustado para zero CLS.
  */
-const oranienbaum = Oranienbaum({
-  variable: "--font-oranienbaum",
+const theSeasons = localFont({
+  src: "../fonts/the-seasons-regular.woff2",
+  variable: "--font-the-seasons",
   weight: "400",
-  subsets: ["latin"],
+  style: "normal",
   display: "swap",
 });
 
@@ -65,7 +70,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="pt-BR"
       data-scroll-behavior="smooth"
       style={{ "--bg-botanico": `url(${basePath}/brand/fundo-botanico.webp)` } as React.CSSProperties}
-      className={`${oranienbaum.variable} ${quicksand.variable} ${libreBaskerville.variable} h-full antialiased`}
+      className={`${theSeasons.variable} ${quicksand.variable} ${libreBaskerville.variable} h-full antialiased`}
     >
       <head>
         <GoogleTagManagerScript />
