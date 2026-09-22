@@ -1,6 +1,4 @@
-import Link from "next/link";
-import Image from "next/image";
-import { assetPath } from "@/lib/utils";
+import { BrandSignature } from "@/components/brand/BrandSignature";
 
 /**
  * Login e cadastro: só a marca em cima (clicável, volta pra home) e o card
@@ -10,16 +8,7 @@ import { assetPath } from "@/lib/utils";
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 sm:py-20">
-      <Link href="/" className="inline-flex" aria-label="O Encontro 2027 — página inicial">
-        <Image
-          src={assetPath("/brand/lockup-2027.webp")}
-          alt="O Encontro 2027"
-          width={875}
-          height={168}
-          loading="eager"
-          className="h-9 w-auto"
-        />
-      </Link>
+      <BrandSignature size="md" vertical />
 
       <div className="mt-10 w-full max-w-sm">{children}</div>
     </div>

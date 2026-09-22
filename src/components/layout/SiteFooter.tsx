@@ -1,7 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
-import { assetPath } from "@/lib/utils";
 import { SupportLink } from "@/components/layout/SupportLink";
+import { BrandSignature } from "@/components/brand/BrandSignature";
 
 const LINKS_EVENTO = [
   { href: "/o-encontro", label: "O Encontro" },
@@ -28,9 +27,7 @@ export function SiteFooter() {
     <footer className="border-t border-border bg-papel">
       <div className="container-site grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr]">
         <div>
-          <Link href="/" className="inline-flex min-h-11 items-center" aria-label="O Encontro 2027">
-            <Image src={assetPath("/brand/lockup-2027.webp")} alt="O Encontro 2027" width={875} height={168} loading="eager" className="h-10 w-auto" />
-          </Link>
+          <BrandSignature />
           <p className="mt-4 max-w-xs text-sm text-marrom-suave leading-relaxed">
             Edição comemorativa de 5 anos.
           </p>
