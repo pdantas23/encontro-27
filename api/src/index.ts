@@ -29,7 +29,7 @@ if (allowedOrigins.length === 0) {
 // então CORS_ALLOWED_ORIGINS=* precisa virar a string "*" pra valer.
 const corsMiddleware = cors({
   origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
+  allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
 })
 
