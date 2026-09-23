@@ -34,6 +34,11 @@ const MOTIVO_MENSAGENS: Record<string, string> = {
 // quadro da câmera, ela decodifica o mesmo QR várias vezes por segundo.
 const REPETICAO_IGNORADA_MS = 4000;
 
+// Sem tela de configurações no admin, a data do evento vem direto do .env
+// (ver .env.example) — em branco, checkin_encontro27 simplesmente não avisa.
+const DATA_INICIO_EVENTO = process.env.NEXT_PUBLIC_EVENT_DATE_INICIO || null;
+const DATA_FIM_EVENTO = process.env.NEXT_PUBLIC_EVENT_DATE_FIM || null;
+
 export default function AdminCheckInPage() {
   const { user, loading: authLoading } = useAdminAuth({ permitirStaff: true });
 
@@ -62,7 +67,11 @@ export default function AdminCheckInPage() {
     setResultado(null);
 
     const supabase = createClient();
-    const { data, error } = await supabase.rpc("checkin_encontro27", { p_identificador: identificador });
+    const { data, error } = await supabase.rpc("checkin_encontro27", {
+      p_identificador: identificador,
+      p_data_inicio: DATA_INICIO_EVENTO,
+      p_data_fim: DATA_FIM_EVENTO,
+    });
     processandoRef.current = false;
     setProcessandoId(null);
 

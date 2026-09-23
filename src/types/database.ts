@@ -339,7 +339,7 @@ export interface Database {
         Returns: Json;
       };
       checkin_encontro27: {
-        Args: { p_identificador: string };
+        Args: { p_identificador: string; p_data_inicio?: string | null; p_data_fim?: string | null };
         Returns: Json;
       };
       buscar_participantes_checkin_encontro27: {
