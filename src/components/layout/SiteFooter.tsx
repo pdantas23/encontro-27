@@ -18,9 +18,8 @@ const LINKS_CONTA = [
 ];
 
 /**
- * Rodapé só com informação real. Redes sociais e canal de suporte são
- * PENDENTES (cap. 16): o suporte aparece sozinho quando `whatsapp_support`
- * for preenchido no painel.
+ * Rodapé só com informação real. Redes sociais ainda são pendentes; o suporte
+ * aparece via NEXT_PUBLIC_WHATSAPP_SUPPORT (ver SupportLink).
  */
 export function SiteFooter() {
   return (

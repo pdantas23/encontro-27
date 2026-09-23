@@ -67,7 +67,8 @@ Dois detalhes que custam tempo quando pegam de surpresa:
 - **Pagar aprova o pedido pelo webhook**, não pelo retorno do navegador. Em
   desenvolvimento a Hypercash não alcança sua máquina: use ngrok, ou simule o
   POST com `curl` (veja "Aprovação do pagamento"). Sem isso o pedido fica em
-  `aguardando_pagamento` até alguém aprovar em `/admin/pedidos`.
+  `aguardando_pagamento` indefinidamente — a aprovação é só automática, não há
+  botão para forçá-la no painel.
 
 ## Aprovação do pagamento
 
@@ -86,8 +87,9 @@ O webhook também não devolve o id do payment-link que criamos por pedido, ent�
 a ligação transação → pedido é reconstruída por e-mail do comprador + valor
 exato, entre os pedidos ainda aguardando. Quando isso não fecha em exatamente
 um pedido, **nada é aprovado**: o evento fica em
-`webhooks_hypercash_encontro27` com resultado `nao_correlacionado` ou `ambiguo`,
-para aprovação manual em `/admin/pedidos`. Todo payload recebido é gravado
+`webhooks_hypercash_encontro27` com resultado `nao_correlacionado` ou `ambiguo`.
+Não existe aprovação manual pelo painel (`/admin/pedidos` é só leitura) — esses
+casos exigem intervenção direta no banco. Todo payload recebido é gravado
 nessa tabela, e o índice único `(object_id, status)` é o que impede que um
 retry da Hypercash aprove duas vezes.
 
