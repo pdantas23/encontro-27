@@ -44,6 +44,7 @@ export interface Database {
           id: string;
           name: string | null;
           date: string | null;
+          date_fim: string | null;
           location: string | null;
           description: string | null;
           sale_status: string;
@@ -58,6 +59,7 @@ export interface Database {
           id?: string;
           name?: string | null;
           date?: string | null;
+          date_fim?: string | null;
           location?: string | null;
           description?: string | null;
           sale_status?: string;
@@ -338,6 +340,10 @@ export interface Database {
       };
       checkin_encontro27: {
         Args: { p_identificador: string };
+        Returns: Json;
+      };
+      buscar_participantes_checkin_encontro27: {
+        Args: { p_nome: string };
         Returns: Json;
       };
       solicitar_transferencia_titularidade_encontro27: {
