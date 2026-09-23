@@ -27,7 +27,7 @@ export function ConfirmModal({
     <AnimatePresence>
       {aberto && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-marrom/40 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
