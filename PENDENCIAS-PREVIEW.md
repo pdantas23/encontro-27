@@ -37,12 +37,11 @@ O painel nasceu com markup simples (h1, table, inline style). O acabamento
 está sendo feito aba por aba, com dados mock, no mesmo ritmo da área do
 participante.
 
-**Feitas:** Dashboard, Pedidos, Produtos, Equipe.
+**Feitas:** Dashboard, Pedidos, Produtos, Equipe, Check-in.
 
 **Faltam ajustar** (ainda no visual "cru" original, só com o layout/fonte
 globais do painel aplicados):
 
-- [ ] Check-in (`/admin/check-in`)
 - [ ] Relatórios (`/admin/relatorios`)
 
 Abas removidas: Participantes e Configurações. Modalidades e Lotes viraram uma
@@ -108,9 +107,9 @@ só, **Produtos** (`/admin/produtos`).
       suporte, IDs de GA4/GTM/Pixel/Ads, status das vendas) não tem mais tela —
       só dá pra editar direto no banco, e o site (`SupportLink`, tracking) ainda
       lê essa tabela.
-- [ ] **Equipe:** só cadastra `staff`. Não há remover pessoa, trocar role nem
-      redefinir senha na tela; `comercial`/`marketing` seguem sendo criados por
-      `scripts/seed-admin.mjs`.
+- [ ] **Equipe:** o cadastro deixa escolher a role (staff/comercial/marketing).
+      Não há remover pessoa, trocar role nem redefinir senha na tela;
+      `scripts/seed-admin.mjs` continua sendo outra forma de criar admin.
 - [ ] **API `/equipe`** (`api/src/routes/equipe.ts`) precisa ser publicada
       (push + redeploy no EasyPanel) pra o cadastro da equipe funcionar em
       produção. A conta staff é criada com e-mail já confirmado e senha inicial
@@ -120,6 +119,24 @@ só, **Produtos** (`/admin/produtos`).
       apenas blur.
 - [ ] Interações de `Dropdown`/`Modal` (teclado, clique fora, animações)
       foram validadas só por build/lint/HTML — falta uma passada no navegador.
+- [ ] **Check-in:** busca por nome é a tela principal; o ícone de QR abre a
+      câmera num modal (`@zxing/browser`, nova dependência em `package.json`).
+      Não tem mais busca manual por identificador — a busca por nome cobre
+      esse caso. Exige câmera do navegador, que só funciona em conexão segura
+      (HTTPS ou `localhost`) — confirmar que o domínio final serve o site em
+      HTTPS. Testado com câmera de verdade (Chromium com dispositivo de vídeo
+      simulado, lendo um QR real); não testado ainda num celular real.
+- [ ] **Check-in avisa (não bloqueia) fora do dia do evento:** migration 0013
+      acrescentou `event_config_encontro27.date_fim` (evento de vários dias:
+      `date` = primeiro dia, `date_fim` = último). Sem essas datas
+      preenchidas — como hoje —, o aviso simplesmente não aparece. Preencher
+      quando as datas do evento forem definidas (não tem tela pra isso desde
+      que Configurações saiu; só dá pra editar direto no banco).
+- [ ] Achei (não apaguei) dois participantes de teste antigos e sem relação
+      com esta sessão — `Teste` (`teste@exemplo.com`) e `Teste Clone Limpo`
+      (`clone@teste.com`) — direto na tabela `participantes_encontro27` de
+      produção. Provavelmente sobraram de um teste manual seu; apagar se não
+      forem mais necessários.
 
 ## Cadastro de participante sem confirmação de e-mail
 
