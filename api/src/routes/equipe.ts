@@ -3,14 +3,16 @@ import { getSupabase } from '../lib/supabase.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const SENHA_MIN = 6 // = minimum_password_length do Supabase Auth
+const ROLES_VALIDAS = ['comercial', 'marketing', 'staff']
 
 const app = new Hono()
 
-// Cadastra uma pessoa da equipe com a role 'staff' (acesso só ao check-in).
-// Só admin (comercial/marketing) pode chamar: o navegador manda o access_token
-// da sessão em Authorization e a rota confere o perfil no banco. Existe na API
-// porque criar usuário exige a chave de serviço, que nunca vai pro navegador.
-// A role é sempre 'staff' — a rota não aceita escolher outra, de propósito.
+// Cadastra uma pessoa da equipe, com a role escolhida por quem cadastra
+// ('comercial'/'marketing' têm acesso total ao painel; 'staff' só ao check-in,
+// ver useAdminAuth). Só admin (comercial/marketing) pode chamar: o navegador
+// manda o access_token da sessão em Authorization e a rota confere o perfil
+// no banco. Existe na API porque criar usuário exige a chave de serviço, que
+// nunca vai pro navegador.
 app.post('/', async (c) => {
   const token = c.req.header('authorization')?.replace(/^Bearer\s+/i, '')
   if (!token) {
@@ -41,12 +43,15 @@ app.post('/', async (c) => {
     return c.json({ error: 'invalid_json' }, 400)
   }
 
-  const { email, senha } = body ?? {}
+  const { email, senha, role } = body ?? {}
   if (typeof email !== 'string' || !EMAIL_RE.test(email.trim())) {
     return c.json({ error: 'email_invalido' }, 400)
   }
   if (typeof senha !== 'string' || senha.length < SENHA_MIN) {
     return c.json({ error: 'senha_curta' }, 400)
+  }
+  if (typeof role !== 'string' || !ROLES_VALIDAS.includes(role)) {
+    return c.json({ error: 'role_invalida' }, 400)
   }
 
   const emailNormalizado = email.trim().toLowerCase()
@@ -70,7 +75,7 @@ app.post('/', async (c) => {
 
   const { error: perfilError } = await supabase
     .from('profiles_encontro27')
-    .insert({ uuid: criado.user.id, email: emailNormalizado, role: 'staff' })
+    .insert({ uuid: criado.user.id, email: emailNormalizado, role })
 
   if (perfilError) {
     // Sem perfil a conta não serve pra nada e ainda ocuparia o e-mail: desfaz.

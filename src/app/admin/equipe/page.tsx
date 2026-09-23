@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { UserPlus } from "lucide-react";
+import { Search, UserPlus } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { Modal } from "@/components/ui/Modal";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { createClient } from "@/lib/supabase/client";
@@ -14,11 +15,11 @@ type PerfilRow = Database["public"]["Tables"]["profiles_encontro27"]["Row"];
 
 // ⚠️ TEMPORÁRIO — ver aviso em src/hooks/useAdminAuth.ts / PENDENCIAS-PREVIEW.md.
 const PREVIEW_FAKE = true;
+// As duas contas reais que já têm acesso: a de desenvolvimento e a do Encontro
+// em si (mesma conta cadastrada na tabela de perfis do Encontro 26).
 const EQUIPE_FAKE: PerfilRow[] = [
   { uuid: "00000000-0000-0000-0000-000000000001", email: "desenvolvimento@rcoacademy.com.br", role: "comercial", created_at: "2026-08-20T12:00:00.000Z" },
-  { uuid: "00000000-0000-0000-0000-000000000002", email: "marketing@oencontro.com.br", role: "marketing", created_at: "2026-08-25T12:00:00.000Z" },
-  { uuid: "00000000-0000-0000-0000-000000000003", email: "portaria1@oencontro.com.br", role: "staff", created_at: "2026-09-10T12:00:00.000Z" },
-  { uuid: "00000000-0000-0000-0000-000000000004", email: "portaria2@oencontro.com.br", role: "staff", created_at: "2026-09-10T12:05:00.000Z" },
+  { uuid: "00000000-0000-0000-0000-000000000002", email: "encontrocomercial@royalhub.com.br", role: "comercial", created_at: "2026-08-25T12:00:00.000Z" },
 ];
 
 const ROLE_LABEL: Record<PerfilRole, string> = {
@@ -26,6 +27,11 @@ const ROLE_LABEL: Record<PerfilRole, string> = {
   marketing: "Marketing",
   staff: "Staff",
 };
+const ROLE_OPTIONS: { value: PerfilRole; label: string }[] = [
+  { value: "staff", label: "Staff" },
+  { value: "comercial", label: "Comercial" },
+  { value: "marketing", label: "Marketing" },
+];
 const ROLE_BADGE: Record<PerfilRole, string> = {
   comercial: "bg-areia text-marrom-suave",
   marketing: "bg-areia text-marrom-suave",
@@ -41,14 +47,17 @@ const MENSAGENS_ERRO: Record<string, string> = {
   senha_curta: "A senha precisa ter pelo menos 6 caracteres.",
   senha_fraca: "Escolha uma senha mais forte.",
   email_ja_cadastrado: "Já existe uma conta com esse e-mail.",
+  role_invalida: "Escolha uma role válida.",
 };
 
 export default function AdminEquipePage() {
   const { user, loading: authLoading } = useAdminAuth();
   const [equipe, setEquipe] = useState<PerfilRow[] | null>(PREVIEW_FAKE ? EQUIPE_FAKE : null);
+  const [busca, setBusca] = useState("");
   const [cadastrando, setCadastrando] = useState(false);
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [role, setRole] = useState<PerfilRole>("staff");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -70,6 +79,7 @@ export default function AdminEquipePage() {
   function abrirCadastro() {
     setEmail("");
     setSenha("");
+    setRole("staff");
     setErro(null);
     setFeedback(null);
     setCadastrando(true);
@@ -98,7 +108,7 @@ export default function AdminEquipePage() {
       ? await fetch(`${apiUrl}/equipe`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-          body: JSON.stringify({ email, senha }),
+          body: JSON.stringify({ email, senha, role }),
         }).catch(() => null)
       : null;
 
@@ -111,11 +121,14 @@ export default function AdminEquipePage() {
     }
 
     setCadastrando(false);
-    setFeedback(`${email.trim().toLowerCase()} cadastrado(a) na equipe como staff.`);
+    setFeedback(`${email.trim().toLowerCase()} cadastrado(a) na equipe como ${ROLE_LABEL[role]}.`);
     setRefreshKey((key) => key + 1);
   }
 
   if (authLoading || !user) return null;
+
+  const termo = busca.trim().toLowerCase();
+  const equipeVisivel = (equipe ?? []).filter((pessoa) => !termo || pessoa.email.toLowerCase().includes(termo));
 
   return (
     <AdminLayout user={user}>
@@ -124,14 +137,29 @@ export default function AdminEquipePage() {
         Quem tem acesso ao painel. A role <strong>staff</strong> só enxerga o check-in.
       </p>
 
-      <div className="mt-6 flex justify-end">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-56 flex-1">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-marrom-suave"
+          />
+          <input
+            type="search"
+            aria-label="Buscar por e-mail"
+            placeholder="Buscar"
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            className="pl-9"
+          />
+        </div>
         <button
           type="button"
           onClick={abrirCadastro}
-          className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-pill bg-ambar-escuro px-5 font-semibold text-papel transition-colors hover:bg-ambar-pressed"
+          aria-label="Cadastrar pessoa"
+          title="Cadastrar pessoa"
+          className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-ambar-escuro text-papel transition-colors hover:bg-ambar-pressed"
         >
-          <UserPlus aria-hidden="true" className="size-4" />
-          Cadastrar pessoa
+          <UserPlus aria-hidden="true" className="size-[18px]" />
         </button>
       </div>
 
@@ -139,8 +167,10 @@ export default function AdminEquipePage() {
 
       {!equipe ? (
         <p className="mt-6">Carregando...</p>
-      ) : equipe.length === 0 ? (
-        <p className="mt-6 text-marrom-suave">Nenhuma pessoa cadastrada.</p>
+      ) : equipeVisivel.length === 0 ? (
+        <p className="mt-6 text-marrom-suave">
+          {equipe.length === 0 ? "Nenhuma pessoa cadastrada." : "Nenhuma pessoa encontrada."}
+        </p>
       ) : (
         <div className="mt-4 overflow-x-auto">
           <table style={{ minWidth: 520 }}>
@@ -152,7 +182,7 @@ export default function AdminEquipePage() {
               </tr>
             </thead>
             <tbody>
-              {equipe.map((pessoa) => (
+              {equipeVisivel.map((pessoa) => (
                 <tr key={pessoa.uuid}>
                   <td style={tdStyle}>{pessoa.email}</td>
                   <td style={tdStyle}>
@@ -181,8 +211,7 @@ export default function AdminEquipePage() {
       >
         <form onSubmit={cadastrar} className="text-sm" style={{ marginTop: 0 }}>
           <p className="text-marrom-suave">
-            A pessoa entra em <strong>/admin/login</strong> com esse e-mail e senha e tem acesso só ao check-in (role
-            staff).
+            A pessoa entra em <strong>/admin/login</strong> com esse e-mail e senha.
           </p>
 
           <div className="mt-4 flex flex-col gap-4">
@@ -207,6 +236,11 @@ export default function AdminEquipePage() {
                 value={senha}
                 onChange={(event) => setSenha(event.target.value)}
               />
+            </div>
+
+            <div>
+              <span className="font-semibold text-vinho">Role</span>
+              <Dropdown ariaLabel="Role" value={role} options={ROLE_OPTIONS} onChange={setRole} className="mt-1.5" />
             </div>
           </div>
 
