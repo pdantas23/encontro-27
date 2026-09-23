@@ -13,26 +13,11 @@ interface DashboardData {
   vendasPorModalidade: { modalidade: string; quantidade: number }[];
 }
 
-// ⚠️ TEMPORÁRIO — ver aviso em src/hooks/useAdminAuth.ts / PENDENCIAS-PREVIEW.md.
-const PREVIEW_FAKE = true;
-const DATA_FAKE: DashboardData = {
-  aguardando: 9,
-  aprovados: 30,
-  receitaAprovada: 26700,
-  vendasPorModalidade: [
-    { modalidade: "Start", quantidade: 14 },
-    { modalidade: "Almoço Não Participante", quantidade: 6 },
-    { modalidade: "Jantar de Conexões", quantidade: 5 },
-    { modalidade: "VIP", quantidade: 5 },
-  ],
-};
-
 export default function AdminDashboardPage() {
   const { user, loading: authLoading } = useAdminAuth();
-  const [data, setData] = useState<DashboardData | null>(PREVIEW_FAKE ? DATA_FAKE : null);
+  const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    if (PREVIEW_FAKE) return;
     if (!user) return;
 
     async function load() {

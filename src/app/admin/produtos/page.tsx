@@ -23,69 +23,6 @@ interface Linha {
   lote: LoteRow | null;
 }
 
-// ⚠️ TEMPORÁRIO — ver aviso em src/hooks/useAdminAuth.ts / PENDENCIAS-PREVIEW.md.
-const PREVIEW_FAKE = true;
-const AGORA_FAKE = "2026-09-01T12:00:00.000Z";
-function modalidadeFake(n: number, slug: string, nome: string, overrides: Partial<ModalidadeRow> = {}): ModalidadeRow {
-  return {
-    id: `00000000-0000-0000-0000-00000000000${n}`,
-    slug,
-    nome,
-    descricao: null,
-    para_quem_e: null,
-    itens_incluidos: null,
-    itens_nao_incluidos: null,
-    condicoes: null,
-    ordem: n,
-    ativo: true,
-    created_at: AGORA_FAKE,
-    updated_at: AGORA_FAKE,
-    ...overrides,
-  };
-}
-function loteFake(n: number, modalidade: ModalidadeRow, overrides: Partial<LoteRow> = {}): LoteRow {
-  return {
-    id: `10000000-0000-0000-0000-00000000000${n}`,
-    modalidade_id: modalidade.id,
-    nome: "Lote 1",
-    preco: 390,
-    quantidade: null,
-    quantidade_vendida: 0,
-    inicio_venda: null,
-    fim_venda: null,
-    status: "ativo",
-    hypercash_checkout_url: "https://pay.hypercash.com.br/pt/checkout/exemplo",
-    ordem: 1,
-    created_at: AGORA_FAKE,
-    updated_at: AGORA_FAKE,
-    ...overrides,
-  };
-}
-const START_FAKE = modalidadeFake(1, "start", "Start");
-const ALMOCO_FAKE = modalidadeFake(2, "almoco-nao-participante", "Almoço Não Participante");
-const JANTAR_FAKE = modalidadeFake(3, "jantar-conexoes", "Jantar de Conexões");
-const VIP_FAKE = modalidadeFake(4, "vip", "VIP");
-const ALMOCO_START_FAKE = modalidadeFake(5, "almoco-start", "Almoço Start", { ativo: false });
-const MODALIDADES_FAKE: ModalidadeComLotes[] = [
-  { ...START_FAKE, lotes_encontro27: [loteFake(1, START_FAKE, { preco: 2397, quantidade_vendida: 14 })] },
-  {
-    ...ALMOCO_FAKE,
-    lotes_encontro27: [loteFake(2, ALMOCO_FAKE, { preco: 790, quantidade: 80, quantidade_vendida: 6 })],
-  },
-  {
-    ...JANTAR_FAKE,
-    lotes_encontro27: [loteFake(3, JANTAR_FAKE, { preco: 387, quantidade: 60, quantidade_vendida: 60, status: "esgotado" })],
-  },
-  {
-    ...VIP_FAKE,
-    lotes_encontro27: [
-      loteFake(4, VIP_FAKE, { preco: 3300, quantidade: 50, quantidade_vendida: 5 }),
-      loteFake(5, VIP_FAKE, { nome: "Lote 2", ordem: 2, preco: 3600, status: "encerrado", hypercash_checkout_url: null }),
-    ],
-  },
-  { ...ALMOCO_START_FAKE, lotes_encontro27: [] },
-];
-
 const STATUS_LOTE = [
   { value: "ativo", label: "Ativo" },
   { value: "encerrado", label: "Encerrado" },
@@ -197,7 +134,7 @@ function loteNovo(lotes: LoteRow[]): FormLote {
 
 export default function AdminProdutosPage() {
   const { user, loading: authLoading } = useAdminAuth();
-  const [modalidades, setModalidades] = useState<ModalidadeComLotes[] | null>(PREVIEW_FAKE ? MODALIDADES_FAKE : null);
+  const [modalidades, setModalidades] = useState<ModalidadeComLotes[] | null>(null);
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<StatusLote | "todos">("todos");
   const [edicao, setEdicao] = useState<Edicao | null>(null);
@@ -207,7 +144,6 @@ export default function AdminProdutosPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    if (PREVIEW_FAKE) return;
     if (!user) return;
 
     async function load() {
