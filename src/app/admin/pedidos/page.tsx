@@ -25,96 +25,6 @@ type PedidoComLote = PedidoRow & {
   } | null;
 };
 
-// ⚠️ TEMPORÁRIO — ver aviso em src/hooks/useAdminAuth.ts / PENDENCIAS-PREVIEW.md.
-// Datas fixas (e não new Date()) pra HTML do servidor e do navegador baterem.
-const PREVIEW_FAKE = true;
-function pedidoFake(n: number, criadoEm: string, overrides: Partial<PedidoComLote>): PedidoComLote {
-  return {
-    id: `00000000-0000-0000-0000-00000000000${n}`,
-    comprador_nome: "Maria da Silva",
-    comprador_email: "maria@example.com",
-    comprador_whatsapp: "(11) 98888-7777",
-    lote_id: "00000000-0000-0000-0000-0000000000a1",
-    quantidade: 1,
-    valor_unitario_registrado: 890,
-    valor_total: 890,
-    status_pagamento: "aprovado",
-    hypercash_url_usado: null,
-    hypercash_payment_link_id: null,
-    hypercash_checkout_criado_em: null,
-    hypercash_transaction_id: null,
-    hypercash_status_bruto: null,
-    aprovado_via: "webhook",
-    utm_source: null,
-    utm_medium: null,
-    utm_campaign: null,
-    utm_term: null,
-    utm_content: null,
-    aceite_termos: true,
-    aceite_termos_em: criadoEm,
-    tem_problema_estoque: false,
-    confirmado_por: null,
-    confirmado_em: criadoEm,
-    created_at: criadoEm,
-    updated_at: criadoEm,
-    lotes_encontro27: { nome: "Lote 1", modalidades_encontro27: { nome: "VIP" } },
-    ...overrides,
-  };
-}
-const PEDIDOS_FAKE: PedidoComLote[] = [
-  pedidoFake(1, "2026-09-18T17:30:00.000Z", {}),
-  pedidoFake(2, "2026-09-18T13:05:00.000Z", {
-    comprador_nome: "João Pereira",
-    comprador_email: "joao@example.com",
-    comprador_whatsapp: "(21) 97777-6666",
-    valor_unitario_registrado: 390,
-    valor_total: 390,
-    status_pagamento: "aguardando_pagamento",
-    confirmado_em: null,
-    aprovado_via: null,
-    lotes_encontro27: { nome: "Lote 1", modalidades_encontro27: { nome: "Start" } },
-  }),
-  pedidoFake(3, "2026-09-17T20:45:00.000Z", {
-    comprador_nome: "Ana Beatriz",
-    comprador_email: "ana@example.com",
-    comprador_whatsapp: "(31) 96666-5555",
-    valor_unitario_registrado: 450,
-    valor_total: 450,
-    status_pagamento: "recusado",
-    confirmado_em: null,
-    aprovado_via: null,
-    lotes_encontro27: { nome: "Lote 1", modalidades_encontro27: { nome: "Jantar de Conexões" } },
-  }),
-  pedidoFake(4, "2026-09-16T11:20:00.000Z", {
-    comprador_nome: "Carlos Mendes",
-    comprador_email: "carlos@example.com",
-    comprador_whatsapp: "(41) 95555-4444",
-    valor_unitario_registrado: 390,
-    valor_total: 390,
-    aprovado_via: "admin",
-    tem_problema_estoque: true,
-    lotes_encontro27: { nome: "Lote 1", modalidades_encontro27: { nome: "Start" } },
-  }),
-];
-const PARTICIPANTES_FAKE: Record<string, ParticipanteRow[]> = Object.fromEntries(
-  PEDIDOS_FAKE.map((pedido, indice) => [
-    pedido.id,
-    [
-      {
-        id: `10000000-0000-0000-0000-00000000000${indice + 1}`,
-        pedido_id: pedido.id,
-        nome: pedido.comprador_nome,
-        email: pedido.comprador_email,
-        identificador_unico: `20000000-0000-0000-0000-00000000000${indice + 1}`,
-        check_in_status: indice === 0,
-        check_in_em: null,
-        check_in_por: null,
-        created_at: pedido.created_at,
-      },
-    ],
-  ]),
-);
-
 const STATUS_OPTIONS: { value: StatusPagamento | "todos"; label: string }[] = [
   { value: "todos", label: "Todos os status" },
   { value: "aguardando_pagamento", label: "Aguardando pagamento" },
@@ -155,16 +65,13 @@ const APROVADO_VIA_LABEL: Record<string, string> = {
 
 export default function AdminPedidosPage() {
   const { user, loading: authLoading } = useAdminAuth();
-  const [pedidos, setPedidos] = useState<PedidoComLote[] | null>(PREVIEW_FAKE ? PEDIDOS_FAKE : null);
+  const [pedidos, setPedidos] = useState<PedidoComLote[] | null>(null);
   const [filtro, setFiltro] = useState<StatusPagamento | "todos">("todos");
   const [busca, setBusca] = useState("");
   const [detalheId, setDetalheId] = useState<string | null>(null);
-  const [participantesPorPedido, setParticipantesPorPedido] = useState<Record<string, ParticipanteRow[]>>(
-    PREVIEW_FAKE ? PARTICIPANTES_FAKE : {},
-  );
+  const [participantesPorPedido, setParticipantesPorPedido] = useState<Record<string, ParticipanteRow[]>>({});
 
   useEffect(() => {
-    if (PREVIEW_FAKE) return;
     if (!user) return;
 
     async function load() {
@@ -209,7 +116,8 @@ export default function AdminPedidosPage() {
     return (
       pedido.comprador_nome.toLowerCase().includes(termo) ||
       pedido.comprador_email.toLowerCase().includes(termo) ||
-      (digitos !== "" && pedido.comprador_whatsapp.replace(/\D/g, "").includes(digitos))
+      (digitos !== "" && pedido.comprador_whatsapp.replace(/\D/g, "").includes(digitos)) ||
+      (pedido.hypercash_transaction_id?.toLowerCase().includes(termo) ?? false)
     );
   });
 
@@ -331,6 +239,7 @@ export default function AdminPedidosPage() {
                 <Linha rotulo="Quantidade">{detalhe.quantidade}</Linha>
                 <Linha rotulo="Valor unitário">{formatCurrencyBRL(Number(detalhe.valor_unitario_registrado))}</Linha>
                 <Linha rotulo="Valor total">{formatCurrencyBRL(Number(detalhe.valor_total))}</Linha>
+                <Linha rotulo="ID Hypercash">{detalhe.hypercash_transaction_id ?? "-"}</Linha>
               </Secao>
             </div>
 
