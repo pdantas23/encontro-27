@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChartColumn, LayoutDashboard, LogOut, Package, QrCode, ShoppingBag, Users, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { AdminUser } from "@/hooks/useAdminAuth";
@@ -33,6 +34,27 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const navId = useId();
+  const painelRef = useRef<HTMLDivElement>(null);
+
+  // Trava a rolagem do fundo e fecha com Esc enquanto a barra lateral está aberta —
+  // mesmo comportamento do Modal (src/components/ui/Modal.tsx).
+  useEffect(() => {
+    if (!open) return;
+
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    painelRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = overflowAnterior;
+    };
+  }, [open]);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -88,13 +110,9 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
     <div className="admin-shell min-h-screen bg-papel lg:grid lg:grid-cols-[240px_1fr]">
       {/* Barra superior (mobile) */}
       <header className="sticky top-0 z-30 grid h-14 grid-cols-[2.75rem_1fr_2.75rem] items-center border-b border-border bg-papel/95 px-4 backdrop-blur lg:hidden">
-        <span aria-hidden="true" />
-        <div className="flex justify-center">
-          <Brand href={inicio} />
-        </div>
         <button
           type="button"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-pill text-vinho hover:bg-areia"
+          className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-pill text-vinho hover:bg-areia"
           aria-expanded={open}
           aria-controls={navId}
           aria-label={open ? "Fechar menu" : "Abrir menu"}
@@ -104,11 +122,47 @@ export function AdminLayout({ user, children }: { user: AdminUser; children: Rea
             {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
           </svg>
         </button>
+        <div className="flex justify-center">
+          <Brand href={inicio} />
+        </div>
+        <span aria-hidden="true" />
       </header>
-      <div id={navId} hidden={!open} className="border-b border-border bg-papel px-4 py-4 lg:hidden">
-        {nav}
-        <div className="mt-4">{userBox}</div>
-      </div>
+
+      {/* Barra lateral deslizante (mobile) */}
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              aria-hidden="true"
+              className="fixed inset-0 z-40 backdrop-blur-md lg:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setOpen(false)}
+            />
+            <motion.div
+              ref={painelRef}
+              id={navId}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu"
+              className="fixed inset-y-0 left-0 z-40 flex w-72 max-w-[80vw] flex-col overflow-y-auto bg-papel p-5 shadow-2xl outline-none lg:hidden"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 340, damping: 32 }}
+            >
+              <div className="mb-6 flex justify-center">
+                <Brand href={inicio} />
+              </div>
+              <div className="flex-1">{nav}</div>
+              {userBox}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Sidebar (desktop) */}
       <aside className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:flex-col lg:border-r lg:border-border lg:bg-areia/30 lg:p-5">

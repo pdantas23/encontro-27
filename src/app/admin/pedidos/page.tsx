@@ -235,7 +235,13 @@ export default function AdminPedidosPage() {
             className="pl-9"
           />
         </div>
-        <Dropdown ariaLabel="Filtrar por status" value={filtro} options={STATUS_OPTIONS} onChange={setFiltro} className="w-52" />
+        <Dropdown
+          ariaLabel="Filtrar por status"
+          value={filtro}
+          options={STATUS_OPTIONS}
+          onChange={setFiltro}
+          className="w-28 shrink-0 sm:w-52"
+        />
       </div>
 
       {!pedidos ? (
