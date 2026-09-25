@@ -67,13 +67,9 @@ export function ModalidadeDetalhe({ slug }: { slug: string }) {
     loteAtivo?.quantidade != null ? loteAtivo.quantidade - loteAtivo.quantidade_vendida : null;
 
   const itensIncluidos = toStringList(modalidade.itens_incluidos);
-  const itensNaoIncluidos = toStringList(modalidade.itens_nao_incluidos);
 
   const secoes: { titulo: string; itens?: string[]; texto?: string | null }[] = [
-    { titulo: "Para quem é", texto: modalidade.para_quem_e },
     { titulo: "O que está incluído", itens: itensIncluidos },
-    { titulo: "O que não está incluído", itens: itensNaoIncluidos },
-    { titulo: "Condições", texto: modalidade.condicoes },
   ];
 
   return (
