@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CalendarDays, MapPin } from "lucide-react";
 import { publicSelectOne } from "@/lib/supabase/publicRest";
 import { cn } from "@/lib/utils";
 
@@ -37,21 +38,29 @@ export function EventInfo({ className }: { className?: string }) {
   if (!dataFormatada && !local) return null;
 
   return (
-    <dl className={cn("flex flex-wrap justify-center gap-x-8 gap-y-2 text-marrom", className)}>
+    <dl className={cn("flex flex-col gap-3 text-marrom", className)}>
       {dataFormatada ? (
-        <div className="flex items-baseline gap-2">
-          <dt className="eyebrow text-marrom-suave">Data</dt>
-          <dd className="font-medium">
-            {info?.date ? <time dateTime={info.date}>{dataFormatada}</time> : null}
-          </dd>
-        </div>
+        <Item icone={<CalendarDays aria-hidden="true" className="size-5" />} rotulo="Data">
+          {info?.date ? <time dateTime={info.date}>{dataFormatada}</time> : null}
+        </Item>
       ) : null}
       {local ? (
-        <div className="flex items-baseline gap-2">
-          <dt className="eyebrow text-marrom-suave">Local</dt>
-          <dd className="font-medium">{local}</dd>
-        </div>
+        <Item icone={<MapPin aria-hidden="true" className="size-5" />} rotulo="Local">
+          {local}
+        </Item>
       ) : null}
     </dl>
+  );
+}
+
+function Item({ icone, rotulo, children }: { icone: React.ReactNode; rotulo: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-pill bg-areia text-ambar-texto">{icone}</span>
+      <div>
+        <dt className="eyebrow text-marrom-suave">{rotulo}</dt>
+        <dd className="font-semibold text-vinho">{children}</dd>
+      </div>
+    </div>
   );
 }

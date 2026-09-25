@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { publicSelect } from "@/lib/supabase/publicRest";
-import { SectionHeading } from "@/components/ui/SectionHeading";
+import { EventoSecao } from "@/components/landing/EventoSecao";
 import { SpeakerCard } from "@/components/landing/SpeakerCard";
 
 interface Convidado {
@@ -42,39 +42,35 @@ export function ConvidadosSection() {
   }, []);
 
   return (
-    <section aria-labelledby="convidados-titulo" className="border-t border-border">
-      <div className="container-site py-16 sm:py-24">
-        <SectionHeading id="convidados-titulo" title="Convidados" />
-
-        <div className="mt-6" aria-live="polite">
-          {state.status === "loading" ? (
-            <p aria-hidden="true" className="h-7 w-2/3 max-w-xl rounded bg-areia animate-pulse" />
-          ) : state.status === "error" ? (
-            <p className="text-marrom">
-              Não foi possível carregar os convidados agora.{" "}
-              <Link href="/convidados" className="font-semibold text-vinho underline underline-offset-4">
-                Ver a página de convidados
+    <EventoSecao id="convidados" titulo="Convidados">
+      <div aria-live="polite">
+        {state.status === "loading" ? (
+          <p aria-hidden="true" className="h-7 w-2/3 max-w-xl rounded bg-areia animate-pulse" />
+        ) : state.status === "error" ? (
+          <p className="text-marrom">
+            Não foi possível carregar os convidados agora.{" "}
+            <Link href="/convidados" className="font-semibold text-vinho underline underline-offset-4">
+              Ver a página de convidados
+            </Link>
+            .
+          </p>
+        ) : state.itens.length === 0 ? (
+          <p className="text-[17px] leading-7 text-marrom">Os convidados desta edição serão anunciados em breve.</p>
+        ) : (
+          <>
+            <ul className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+              {state.itens.map((c) => (
+                <SpeakerCard key={c.id} nome={c.nome} funcao={c.funcao} fotoUrl={c.foto_url} />
+              ))}
+            </ul>
+            <p className="mt-10">
+              <Link href="/convidados" className="inline-flex min-h-11 items-center font-semibold text-vinho underline underline-offset-4 decoration-ambar hover:decoration-ambar-escuro">
+                Ver todos os convidados
               </Link>
-              .
             </p>
-          ) : state.itens.length === 0 ? (
-            <p className="max-w-xl text-lg text-marrom">Os convidados desta edição serão anunciados em breve.</p>
-          ) : (
-            <>
-              <ul className="mt-4 grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-4">
-                {state.itens.map((c) => (
-                  <SpeakerCard key={c.id} nome={c.nome} funcao={c.funcao} fotoUrl={c.foto_url} />
-                ))}
-              </ul>
-              <p className="mt-10">
-                <Link href="/convidados" className="inline-flex min-h-11 items-center font-semibold text-vinho underline underline-offset-4 decoration-ambar hover:decoration-ambar-escuro">
-                  Ver todos os convidados
-                </Link>
-              </p>
-            </>
-          )}
-        </div>
+          </>
+        )}
       </div>
-    </section>
+    </EventoSecao>
   );
 }
