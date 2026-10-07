@@ -4,15 +4,33 @@ import { useCallback, useEffect, useState } from "react";
 import { assetPath } from "@/lib/utils";
 
 /**
- * Fotos reais de edições anteriores (material oficial do site de 2026),
- * reaproveitadas como prova social logo depois do banner, antes dos ingressos. Carrossel simples: avança sozinho a cada
- * 6 s, para com o mouse/foco em cima e não avança com prefers-reduced-motion.
+ * Fotos reais de edições anteriores, reaproveitadas como prova social logo
+ * depois do banner, antes dos ingressos. 2026 primeiro (galeria oficial do
+ * fotógrafo Tibério Hélio no Pixieset), depois 2025 (site de 2026).
+ * Carrossel simples: avança sozinho a cada 6 s, para com o mouse/foco em
+ * cima e não avança com prefers-reduced-motion.
+ * `posicao` ajusta o corte (21:9 no desktop) quando o centro cortaria rostos.
  */
-const TOTAL = 8;
-const FOTOS = Array.from({ length: TOTAL }, (_, i) => ({
-  src: assetPath(`/brand/edicoes/foto-${String(i + 1).padStart(2, "0")}.webp`),
-  alt: `Participantes em uma edição anterior do O Encontro, foto ${i + 1} de ${TOTAL}`,
-}));
+const FOTOS_2026 = [
+  { arquivo: "2026-01", alt: "Almoço de Negócios de 2026 no Vignoli, com participantes à mesa" },
+  { arquivo: "2026-02", alt: "Plateia da imersão de 2026 diante do palco" },
+  { arquivo: "2026-03", alt: "Apresentação de forró com zabumba e sanfonas no palco da edição de 2026" },
+  { arquivo: "2026-04", alt: "Participantes de braços erguidos no salão da imersão de 2026" },
+  { arquivo: "2026-05", alt: "Participantes brindando juntos no encerramento da imersão de 2026" },
+  { arquivo: "2026-06", alt: "Foto com todos os participantes diante do palco da edição de 2026" },
+  { arquivo: "2026-07", alt: "Convidados no Jantar dos VIPs de 2026", posicao: "50% 20%" },
+  { arquivo: "2026-08", alt: "Participantes comemorando na Festa de Encerramento de 2026" },
+];
+
+const FOTOS = [
+  ...FOTOS_2026.map((f) => ({ src: assetPath(`/brand/edicoes/${f.arquivo}.webp`), alt: f.alt, posicao: f.posicao })),
+  ...Array.from({ length: 8 }, (_, i) => ({
+    src: assetPath(`/brand/edicoes/foto-${String(i + 1).padStart(2, "0")}.webp`),
+    alt: `Participantes da edição de 2025 do O Encontro, foto ${i + 1} de 8`,
+    posicao: undefined as string | undefined,
+  })),
+];
+const TOTAL = FOTOS.length;
 
 export function EdicoesAnterioresSection() {
   const [atual, setAtual] = useState(0);
@@ -68,6 +86,7 @@ export function EdicoesAnterioresSection() {
                   loading={i === 0 ? "eager" : "lazy"}
                   decoding="async"
                   className="aspect-[3/2] lg:aspect-[21/9] w-full object-cover"
+                  style={foto.posicao ? { objectPosition: foto.posicao } : undefined}
                 />
               </div>
             ))}
@@ -91,7 +110,7 @@ export function EdicoesAnterioresSection() {
           <Seta direcao="dir" />
         </button>
 
-        <ol className="mt-4 flex justify-center gap-2" aria-label="Escolher foto">
+        <ol className="mt-4 flex flex-wrap justify-center gap-x-1 gap-y-0.5" aria-label="Escolher foto">
           {FOTOS.map((_, i) => (
             <li key={i}>
               <button
