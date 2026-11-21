@@ -42,9 +42,41 @@ export function CheckoutWizard({ lote, upgrade, perfil }: Props) {
   // de criar um pedido/participante duplicado.
   const [pedidoPendente, setPedidoPendente] = useState<string | null>(null);
   const [participanteRegistrado, setParticipanteRegistrado] = useState(false);
+  const [cupomTexto, setCupomTexto] = useState("");
+  const [cupom, setCupom] = useState<{ codigo: string; percentual: number } | null>(null);
+  const [erroCupom, setErroCupom] = useState<string | null>(null);
+  const [validandoCupom, setValidandoCupom] = useState(false);
 
-  const precoUnitario = loteEscolhido.preco ?? 0;
+  const precoCheio = loteEscolhido.preco ?? 0;
+  // Mesma conta do banco (pedido_insert_valido_encontro27): preço com desconto arredondado em centavos.
+  const precoUnitario = cupom ? Math.round(precoCheio * (100 - cupom.percentual)) / 100 : precoCheio;
   const valorTotal = precoUnitario * QUANTIDADE;
+
+  async function aplicarCupom() {
+    const codigo = cupomTexto.trim().toUpperCase();
+    if (!codigo || validandoCupom) return;
+    setValidandoCupom(true);
+    setErroCupom(null);
+    const { data, error } = await createClient().rpc("cupom_encontro27", { p_codigo: codigo });
+    setValidandoCupom(false);
+    if (error) {
+      setErroCupom("Não foi possível conferir o cupom agora. Tente novamente.");
+      return;
+    }
+    if (data == null) {
+      setCupom(null);
+      setErroCupom("Cupom inválido.");
+      return;
+    }
+    setCupom({ codigo, percentual: Number(data) });
+    setCupomTexto(codigo);
+  }
+
+  function removerCupom() {
+    setCupom(null);
+    setCupomTexto("");
+    setErroCupom(null);
+  }
 
   // Nome e WhatsApp vêm do cadastro da conta (não são mais pedidos aqui). Contas
   // antigas, criadas sem esses dados, precisam completar o perfil antes de comprar.
@@ -134,6 +166,7 @@ export function CheckoutWizard({ lote, upgrade, perfil }: Props) {
           quantidade: QUANTIDADE,
           valor_unitario_registrado: precoUnitario,
           valor_total: valorTotal,
+          cupom_codigo: cupom?.codigo ?? null,
           hypercash_url_usado: loteEscolhido.hypercash_checkout_url,
           utm_source: utms.utm_source,
           utm_medium: utms.utm_medium,
@@ -204,8 +237,16 @@ export function CheckoutWizard({ lote, upgrade, perfil }: Props) {
       <dl className="mt-8 rounded-card border border-border bg-areia px-5 py-4 text-[15px]">
         <div className="flex justify-between gap-4 py-1">
           <dt className="text-marrom">Valor</dt>
-          <dd className="text-marrom">{formatCurrencyBRL(precoUnitario)}</dd>
+          <dd className="text-marrom">{formatCurrencyBRL(precoCheio)}</dd>
         </div>
+        {cupom && (
+          <div className="flex justify-between gap-4 py-1">
+            <dt className="text-marrom">
+              Cupom {cupom.codigo} ({String(cupom.percentual).replace(".", ",")}%)
+            </dt>
+            <dd className="text-marrom">-{formatCurrencyBRL(precoCheio - precoUnitario)}</dd>
+          </div>
+        )}
         <div className="flex justify-between gap-4 py-1">
           <dt className="text-marrom">Quantidade</dt>
           <dd className="text-marrom">1 ingresso por pedido</dd>
@@ -276,6 +317,64 @@ export function CheckoutWizard({ lote, upgrade, perfil }: Props) {
               <dd className="font-display text-lg text-vinho">{formatCurrencyBRL(valorTotal)}</dd>
             </div>
           </dl>
+
+          <div className="mt-6">
+            <label htmlFor="cupom">
+              Cupom de desconto
+            </label>
+            {cupom ? (
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-[15px] text-marrom">
+                <span>
+                  Cupom <strong className="font-semibold">{cupom.codigo}</strong> aplicado.
+                </span>
+                {!pedidoPendente && (
+                  <button
+                    type="button"
+                    onClick={removerCupom}
+                    disabled={enviando}
+                    className="min-h-11 text-vinho underline underline-offset-4 decoration-ambar"
+                  >
+                    Remover
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="mt-2 flex gap-3">
+                <input
+                  id="cupom"
+                  type="text"
+                  value={cupomTexto}
+                  onChange={(event) => {
+                    setCupomTexto(event.target.value);
+                    setErroCupom(null);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void aplicarCupom();
+                    }
+                  }}
+                  disabled={enviando || pedidoPendente !== null}
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  className="max-w-60 uppercase"
+                />
+                <CTAButton
+                  type="button"
+                  variant="secondary"
+                  onClick={aplicarCupom}
+                  disabled={!cupomTexto.trim() || validandoCupom || enviando || pedidoPendente !== null}
+                >
+                  {validandoCupom ? "Conferindo…" : "Aplicar"}
+                </CTAButton>
+              </div>
+            )}
+            {erroCupom && (
+              <p role="alert" className="mt-2 text-[15px] text-vermelho">
+                {erroCupom}
+              </p>
+            )}
+          </div>
 
           <p className="mt-6 text-[17px] leading-7 text-marrom">
             Ao confirmar, o pagamento seguro na Hypercash abre numa nova aba. Pode voltar pra esta aba depois de

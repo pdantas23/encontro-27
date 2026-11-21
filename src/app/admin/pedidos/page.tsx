@@ -239,6 +239,7 @@ export default function AdminPedidosPage() {
                 <Linha rotulo="Quantidade">{detalhe.quantidade}</Linha>
                 <Linha rotulo="Valor unitário">{formatCurrencyBRL(Number(detalhe.valor_unitario_registrado))}</Linha>
                 <Linha rotulo="Valor total">{formatCurrencyBRL(Number(detalhe.valor_total))}</Linha>
+                <Linha rotulo="Cupom">{detalhe.cupom_codigo ?? "-"}</Linha>
                 <Linha rotulo="ID Hypercash">{detalhe.hypercash_transaction_id ?? "-"}</Linha>
               </Secao>
             </div>

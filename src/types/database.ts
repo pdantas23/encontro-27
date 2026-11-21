@@ -161,6 +161,7 @@ export interface Database {
           utm_campaign: string | null;
           utm_term: string | null;
           utm_content: string | null;
+          cupom_codigo: string | null;
           aceite_termos: boolean;
           aceite_termos_em: string | null;
           tem_problema_estoque: boolean;
@@ -190,6 +191,7 @@ export interface Database {
           utm_campaign?: string | null;
           utm_term?: string | null;
           utm_content?: string | null;
+          cupom_codigo?: string | null;
           aceite_termos?: boolean;
           aceite_termos_em?: string | null;
           tem_problema_estoque?: boolean;
@@ -322,6 +324,10 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      cupom_encontro27: {
+        Args: { p_codigo: string };
+        Returns: number | null;
+      };
       is_admin_encontro27: {
         Args: Record<string, never>;
         Returns: boolean;

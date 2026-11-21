@@ -40,7 +40,7 @@ app.post('/', async (c) => {
   const { data: pedido, error: pedidoError } = await supabase
     .from('pedidos_encontro27')
     .select(
-      'id, status_pagamento, hypercash_url_usado, hypercash_payment_link_id, lotes_encontro27(nome, preco, modalidades_encontro27(nome))',
+      'id, status_pagamento, valor_total, hypercash_url_usado, hypercash_payment_link_id, lotes_encontro27(nome, preco, modalidades_encontro27(nome))',
     )
     .eq('id', pedidoId)
     .maybeSingle()
@@ -62,7 +62,9 @@ app.post('/', async (c) => {
   const lote = pedido.lotes_encontro27 as unknown as LoteAninhado | null
   const modalidadeNome = lote?.modalidades_encontro27?.nome
   const loteNome = lote?.nome
-  const preco = lote?.preco ?? null
+  // O valor do pedido, não o do lote: com cupom, o pedido já nasce com o desconto
+  // (validado no banco por pedido_insert_valido_encontro27).
+  const preco = pedido.valor_total != null ? Number(pedido.valor_total) : null
 
   if (!preco || !modalidadeNome) {
     return c.json({ error: 'lote_sem_preco' }, 422)
