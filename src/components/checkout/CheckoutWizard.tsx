@@ -57,7 +57,7 @@ export function CheckoutWizard({ lote, upgrade, perfil }: Props) {
     if (!codigo || validandoCupom) return;
     setValidandoCupom(true);
     setErroCupom(null);
-    const { data, error } = await createClient().rpc("cupom_encontro27", { p_codigo: codigo });
+    const { data, error } = await createClient().rpc("cupom_encontro27", { p_codigo: codigo, p_lote_id: loteEscolhido.id });
     setValidandoCupom(false);
     if (error) {
       setErroCupom("Não foi possível conferir o cupom agora. Tente novamente.");
@@ -86,6 +86,8 @@ export function CheckoutWizard({ lote, upgrade, perfil }: Props) {
   function escolherIngresso(escolhido: LoteComModalidade) {
     if (escolhido.id === loteEscolhido.id) return;
     setLoteEscolhido(escolhido);
+    // O cupom vale por modalidade: trocou o ingresso, confere de novo.
+    removerCupom();
     trackSelectTicket(escolhido.modalidade.slug, escolhido.modalidade.nome);
   }
 

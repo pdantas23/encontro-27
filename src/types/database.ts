@@ -325,7 +325,7 @@ export interface Database {
     Views: Record<string, never>;
     Functions: {
       cupom_encontro27: {
-        Args: { p_codigo: string };
+        Args: { p_codigo: string; p_lote_id?: string | null };
         Returns: number | null;
       };
       is_admin_encontro27: {
